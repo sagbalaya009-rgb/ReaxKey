@@ -1,0 +1,9 @@
+CREATE TABLE IF NOT EXISTS `media` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `sourceId` TEXT NOT NULL, `uri` TEXT NOT NULL, `name` TEXT NOT NULL, `mime` TEXT NOT NULL, `kind` TEXT NOT NULL, `width` INTEGER NOT NULL, `height` INTEGER NOT NULL, `size` INTEGER NOT NULL, `modified` INTEGER NOT NULL, `animated` INTEGER NOT NULL, `available` INTEGER NOT NULL, `label` TEXT NOT NULL, `favorite` INTEGER NOT NULL, `usage` INTEGER NOT NULL, `lastUsed` INTEGER NOT NULL, `owned` INTEGER NOT NULL, `removed` INTEGER NOT NULL, `tags` TEXT NOT NULL, `created` INTEGER NOT NULL, `indexed` INTEGER NOT NULL, `generation` INTEGER NOT NULL, `durationMs` INTEGER NOT NULL, `contentHash` TEXT);
+CREATE UNIQUE INDEX IF NOT EXISTS `index_media_sourceId_uri` ON `media` (`sourceId`, `uri`);
+CREATE INDEX IF NOT EXISTS `index_media_available` ON `media` (`available`);
+CREATE INDEX IF NOT EXISTS `index_media_lastUsed` ON `media` (`lastUsed`);
+CREATE TABLE IF NOT EXISTS `source` (`id` TEXT NOT NULL, `type` TEXT NOT NULL, `name` TEXT NOT NULL, `uri` TEXT NOT NULL, `health` TEXT NOT NULL, `enabled` INTEGER NOT NULL, `permissionFlags` INTEGER NOT NULL, `lastScan` INTEGER NOT NULL, `lastSuccess` INTEGER NOT NULL, `count` INTEGER NOT NULL, PRIMARY KEY(`id`));
+CREATE TABLE IF NOT EXISTS `collection` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `created` INTEGER NOT NULL, `sortOrder` INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS `membership` (`collectionId` INTEGER NOT NULL, `mediaId` INTEGER NOT NULL, `added` INTEGER NOT NULL, PRIMARY KEY(`collectionId`, `mediaId`), FOREIGN KEY(`collectionId`) REFERENCES `collection`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`mediaId`) REFERENCES `media`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE );
+CREATE INDEX IF NOT EXISTS `index_membership_mediaId` ON `membership` (`mediaId`);
+CREATE VIRTUAL TABLE IF NOT EXISTS `media_fts` USING FTS4(`text` TEXT NOT NULL);

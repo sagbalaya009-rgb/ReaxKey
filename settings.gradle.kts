@@ -5,3 +5,4 @@ dependencyResolutionManagement {
 }
 rootProject.name = "ReaxKey"
 include(":app", ":ime", ":core:model", ":core:ui", ":feature:onboarding")
+include(":core:data", ":core:search")

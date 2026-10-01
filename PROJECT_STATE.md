@@ -25,3 +25,10 @@ The synced parent sources directory is read-only and is not part of this checkou
 - Added launcher icon and explicit backup exclusions. Remaining lint notices are dependency updates and an accessibility touch-listener advisory requiring device validation.
 - Next: Room/DataStore, media ingestion, and testbed.
 
+
+## Data/search checkpoint
+- Room v2 schema, explicit 1-to-2 migration, repository, source health, favorites/usage, collections, removal tombstones, FTS search and DataStore preferences implemented.
+- Full test/lint/APK build passed. Follow-up model/data/search test run passed including the migration preservation test (21 tests total across these modules).
+- Search queries are parameterized and capped at 200 results. No typed-text columns exist.
+- Data/media UI integration is next; current APK still displays keyboard setup only.
+
