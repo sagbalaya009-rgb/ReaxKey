@@ -1,5 +1,16 @@
 # Architecture Decision Record
 
+## ADR-011 — Initial reproducible toolchain (2026-10-01)
+
+Use the installed stable AGP 9.3.2 / Gradle 9.5.0 / JDK 17 toolchain, API 37,
+and AGP's built-in Kotlin 2.2.10 with the matching Compose compiler plugin.
+Minimum Android is API 26. Compose BOM 2026.02.01 and Activity 1.13.0 are pinned.
+AGP 9.4 is available but requires a different Gradle distribution; begin with the
+compatible installed stable line to establish a measured baseline before upgrades.
+Compatibility checked against https://developer.android.com/build/releases/agp-9-3-0-release-notes
+and https://developer.android.com/jetpack/androidx/releases/compose-kotlin.
+Modules are introduced with their first functional implementation rather than empty placeholders.
+
 ## ADR-001 — Native Android/Kotlin
 
 **Decision:** Native Kotlin Android app.
