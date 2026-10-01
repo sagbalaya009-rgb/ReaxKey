@@ -1,34 +1,32 @@
 # Project State
 
-## Checkpoint: build foundation and initial IME/onboarding implementation
+## Current checkpoint — integrated application, platform validation pending
 
-- Date: 2026-10-01
 - Branch: build/full-reaxkey
-- Base documentation commit: 48ada57
-- Current checkpoint commit: see `git log -1` (this file is committed with the checkpoint).
-- Implemented: Gradle wrapper, five functional modules, Compose setup screen, enable/select recheck, ephemeral test field, basic View IME, language-pack parser and shift state engine, four pack assets, CI workflow.
-- Executed: `gradlew.bat test lint assembleDebug --max-workers=2` passed.
-- Unit tests: 10 passed (setup state, shift/caps, locale casing, pack parsing).
-- Lint: no errors; warnings for pinned dependency upgrades, app icon and Android 12 backup rules. Address icon/backup in next change.
+- Last previously pushed checkpoint: 7c275ed (Room/search).
+- Current checkpoint SHA: `git log -1` after this file's commit.
+- Implemented: all 11 documented modules; companion Library/Collections/Sources/Settings; explicit imports/share receiver; SAF/MediaStore scanners; Room/FTS; favorites/collections/tags; DataStore; multilingual typing; internal media search; rich-content sender and explicit Share fallback; separate testbed.
+- Executed: `gradlew.bat test lint assembleDebug --max-workers=2` passed after integration (519 tasks).
+- Tests: 21 unit/Robolectric tests passed, including Room migration and repository/FTS tests. Further integration regression coverage is being added next.
 - APK: app/build/outputs/apk/debug/app-debug.apk.
-- CI: configured; remote run not yet verified.
-- Physical/emulator validation: not run. No compatibility claims.
-- Completion: NOT COMPLETE. Stage 0 local build gate passed; Stage 1 physical gate pending.
-- Next objective: integrate full typing engine and languages, then Room/DataStore and authorized media ingestion. Continue all remaining construction stages; do not stop for the phone until computer-side work is ready.
-- Pending: media/data/search/collections/settings/testbed/release pipeline, substantial device tests and full definition-of-done gates.
+- Testbed APK: testbed/build/outputs/apk/debug/testbed-debug.apk.
+- Lint: zero errors; warnings remain (dependency updates, touch-click advisory, testbed icon/backup configuration, deprecated API/KTX suggestions). Review before release.
+- CI: GitHub run 36936083405 passed for 7c275ed and uploaded an APK. New integrated checkpoint must be verified remotely.
+- ADB: operational; no device connected when checked.
+- Physical/emulator/third-party compatibility: NOT TESTED. Product is NOT COMPLETE under docs/DEFINITION_OF_DONE.md.
 
-The synced parent sources directory is read-only and is not part of this checkout.
+## Next exact objective
 
-## Typing implementation checkpoint
-- Integrated shift/caps, numbers/symbols, editor actions, numeric/email/URL fields, secure-field behavior, held-delete, language switching/alternatives, emoji and dark mode.
-- Executed test/lint/assembleDebug again: passed, 10 tests; physical behavior remains unverified.
-- Added launcher icon and explicit backup exclusions. Remaining lint notices are dependency updates and an accessibility touch-listener advisory requiring device validation.
-- Next: Room/DataStore, media ingestion, and testbed.
+Add and run import/deletion and rich-content/IME regression tests, generated 100/1000/10000-item search measurements, finalize external-signing release/AAB configuration, audit merged permissions, review remaining lint, and verify CI on the latest checkpoint. Then request the owner's phone for physical Android validation; do not claim compatibility before observation.
 
+## Known limitations to resolve or verify
 
-## Data/search checkpoint
-- Room v2 schema, explicit 1-to-2 migration, repository, source health, favorites/usage, collections, removal tombstones, FTS search and DataStore preferences implemented.
-- Full test/lint/APK build passed. Follow-up model/data/search test run passed including the migration preservation test (21 tests total across these modules).
-- Search queries are parameterized and capped at 200 results. No typed-text columns exist.
-- Data/media UI integration is next; current APK still displays keyboard setup only.
+- No emulator/physical app UI inspection yet; IME lifecycle, scrolling, field actions, SAF grants, animated rendering and temporary URI grants need platform QA.
+- Index removal uses tombstones so rescans cannot silently restore removed media.
+- Background scan failure marks the source unavailable; reconnect/rescan is exposed.
+- Theme/language/haptic preferences are wired to app and IME.
+- Large-library search has bounded SQL/FTS queries; measurements are still pending.
+- Imports are capped at 50 MB each; animated WebP detection reads its format header. No vision model.
+- Upload signing key/Play Console work remains external; no production publication authorized.
 
+The parent synced sources directory is read-only and untouched. A draft PR tracks the branch: https://github.com/sagbalaya009-rgb/ReaxKey/pull/1

@@ -2,6 +2,8 @@ package com.reaxkey.model
 
 import kotlinx.coroutines.flow.Flow
 
+interface ReaxHost { val repository:MediaRepository }
+
 data class MediaItem(val id:Long=0,val sourceId:String,val uri:String,val name:String,val mime:String,val kind:String,
     val width:Int=0,val height:Int=0,val size:Long=0,val modified:Long=0,val animated:Boolean=false,
     val available:Boolean=true,val label:String="",val favorite:Boolean=false,val usage:Long=0,val lastUsed:Long=0,

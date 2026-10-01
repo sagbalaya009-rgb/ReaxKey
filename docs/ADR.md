@@ -1,5 +1,13 @@
 # Architecture Decision Record
 
+## ADR-012 — Kotlin compiler alignment for the image loader
+
+Coil 3.6.3 resolves Kotlin 2.4.10 metadata. The baseline Kotlin 2.2.10 compiler
+correctly rejected it during the library integration build. Upgrade KGP and the
+matching Compose compiler to 2.4.10 using AGP's documented buildscript override.
+Do not suppress metadata compatibility checks. See
+https://developer.android.com/build/releases/agp-9-0-0-release-notes#kotlin-gradle-plugin.
+
 ## ADR-011 — Initial reproducible toolchain (2026-10-01)
 
 Use the installed stable AGP 9.3.2 / Gradle 9.5.0 / JDK 17 toolchain, API 37,

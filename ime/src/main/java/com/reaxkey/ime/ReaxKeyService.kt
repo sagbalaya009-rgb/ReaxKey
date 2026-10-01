@@ -14,8 +14,17 @@ import android.widget.*
 import com.reaxkey.model.*
 import com.reaxkey.ui.R
 import java.util.Locale
+import com.reaxkey.data.Preferences
+import kotlinx.coroutines.*
 
 class ReaxKeyService : InputMethodService() {
+    private val scope=CoroutineScope(SupervisorJob()+Dispatchers.Main.immediate)
+    private val preferences by lazy {Preferences(this)}
+    private val mediaPanel by lazy {MediaPanel(this,scope){sensitive}}
+    private var mediaMode=false
+    private var searching=false
+    private var theme="SYSTEM"
+    private var haptics=true
     private val state = TypingState()
     private val handler = Handler(Looper.getMainLooper())
     private lateinit var root: LinearLayout
@@ -33,6 +42,14 @@ class ReaxKeyService : InputMethodService() {
     private val repeater = object : Runnable {
         override fun run() { if(repeating) { repeatOccurred = true; delete(); handler.postDelayed(this, 65) } }
     }
+    override fun onCreate() {
+        super.onCreate()
+        scope.launch {preferences.flow.collect {value->
+            theme=value.theme;haptics=value.haptics
+            languageIndex=packs.indexOfFirst {it.tag==value.language}.coerceAtLeast(0)
+            if(::root.isInitialized) render()
+        }}
+    }
     override fun onEvaluateFullscreenMode() = false
     override fun onCreateInputView(): View {
         root = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(3),dp(5),dp(3),dp(5)) }
@@ -42,6 +59,7 @@ class ReaxKeyService : InputMethodService() {
     override fun onStartInput(attribute: EditorInfo?, restarting: Boolean) {
         super.onStartInput(attribute,restarting)
         cancelRepeat(); popup?.dismiss(); state.reset(); emoji=false
+        mediaPanel.reset();mediaMode=false;searching=false
         val type=attribute?.inputType ?: 0
         val variation=type and InputType.TYPE_MASK_VARIATION
         numeric=(type and InputType.TYPE_MASK_CLASS) in listOf(InputType.TYPE_CLASS_NUMBER,InputType.TYPE_CLASS_PHONE,InputType.TYPE_CLASS_DATETIME)
@@ -51,20 +69,24 @@ class ReaxKeyService : InputMethodService() {
         updateCaps()
         if(::root.isInitialized) render()
     }
-    override fun onFinishInput() { cancelRepeat(); popup?.dismiss(); state.reset(); super.onFinishInput() }
-    override fun onFinishInputView(finishingInput: Boolean) { cancelRepeat(); popup?.dismiss(); super.onFinishInputView(finishingInput) }
-    override fun onDestroy() { handler.removeCallbacksAndMessages(null); popup?.dismiss(); super.onDestroy() }
+    override fun onFinishInput() { cancelRepeat(); popup?.dismiss(); mediaPanel.reset(); state.reset(); super.onFinishInput() }
+    override fun onFinishInputView(finishingInput: Boolean) { cancelRepeat(); popup?.dismiss(); mediaPanel.reset(); super.onFinishInputView(finishingInput) }
+    override fun onDestroy() { handler.removeCallbacksAndMessages(null); popup?.dismiss(); scope.cancel(); super.onDestroy() }
     override fun onUpdateSelection(oldSelStart:Int,oldSelEnd:Int,newSelStart:Int,newSelEnd:Int,candidatesStart:Int,candidatesEnd:Int) {
         super.onUpdateSelection(oldSelStart,oldSelEnd,newSelStart,newSelEnd,candidatesStart,candidatesEnd)
         val before=state.shift; updateCaps(); if(::root.isInitialized && before != state.shift) render()
     }
     private fun updateCaps() {
-        if(!sensitive && state.layer==Layer.LETTERS) state.autoCap((currentInputConnection?.getCursorCapsMode(currentInputEditorInfo?.inputType ?: 0) ?: 0) != 0)
+        if(!sensitive && !mediaMode && state.layer==Layer.LETTERS) state.autoCap((currentInputConnection?.getCursorCapsMode(currentInputEditorInfo?.inputType ?: 0) ?: 0) != 0)
     }
     private fun render() {
         cancelRepeat(); popup?.dismiss(); root.removeAllViews()
-        val dark=resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
+        val dark=theme=="DARK" || (theme=="SYSTEM" && resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES)
         root.setBackgroundColor(getColor(if(dark) R.color.keyboard_background_dark else R.color.keyboard_background))
+        if(mediaMode) {
+            root.addView(mediaPanel.view(searching,{mediaMode=false;mediaPanel.hide();render()},{searching=!searching;render()}))
+            if(!searching) return
+        }
         val rows=when {
             numeric -> listOf(listOf("1","2","3"),listOf("4","5","6"),listOf("7","8","9"),listOf("-","0",pack.decimal))
             emoji -> listOf(listOf("😀","😂","🥹","😍","😎","🤔"),listOf("😭","😡","🥳","🙏","👍","❤️"))
@@ -87,6 +109,7 @@ class ReaxKeyService : InputMethodService() {
             key(actions,if(state.layer==Layer.LETTERS) "123" else "ABC",getString(R.string.key_symbols),dark) { emoji=false; state.layer=if(state.layer==Layer.LETTERS) Layer.NUMBERS else Layer.LETTERS; render() }
             if(state.layer!=Layer.LETTERS) key(actions,"#+=",getString(R.string.more_symbols),dark) { state.layer=if(state.layer==Layer.SYMBOLS) Layer.NUMBERS else Layer.SYMBOLS; render() }
             key(actions,"☺",getString(R.string.emoji),dark) { emoji=!emoji; render() }
+            if(!mediaMode) key(actions,getString(R.string.media),getString(R.string.media),dark) {mediaMode=true;searching=false;state.reset();render()}
         }
         val delete=key(actions,"⌫",getString(R.string.key_delete),dark) { if(!repeatOccurred) delete(); repeatOccurred=false }
         delete.setOnTouchListener { _,event ->
@@ -100,7 +123,7 @@ class ReaxKeyService : InputMethodService() {
         val bottom=LinearLayout(this)
         key(bottom,"🌐",getString(R.string.switch_keyboard),dark) { getSystemService(InputMethodManager::class.java).showInputMethodPicker() }
         if(!numeric) {
-            key(bottom,pack.name,getString(R.string.change_language),dark) { languageIndex=(languageIndex+1)%packs.size; state.reset(); render() }
+            key(bottom,pack.name,getString(R.string.change_language),dark) { languageIndex=(languageIndex+1)%packs.size; scope.launch {preferences.language(pack.tag)}; state.reset(); render() }
             val variation=(currentInputEditorInfo?.inputType ?: 0) and InputType.TYPE_MASK_VARIATION
             val punctuation=if(variation==InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS || variation==InputType.TYPE_TEXT_VARIATION_WEB_EMAIL_ADDRESS) "@" else if(variation==InputType.TYPE_TEXT_VARIATION_URI) "/" else ","
             key(bottom,punctuation,punctuation,dark) { commit(punctuation) }
@@ -116,7 +139,7 @@ class ReaxKeyService : InputMethodService() {
             isAllCaps=false; minWidth=0; minimumWidth=0; setPadding(0,0,0,0)
             setTextColor(getColor(if(dark) R.color.keyboard_text_dark else R.color.keyboard_text))
             background=android.graphics.drawable.RippleDrawable(android.content.res.ColorStateList.valueOf(0x33426655),GradientDrawable().apply { setColor(getColor(if(dark) R.color.keyboard_key_dark else R.color.keyboard_key)); cornerRadius=dp(7).toFloat() },null)
-            setOnClickListener { performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP); action() }
+            setOnClickListener { if(haptics) performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP); action() }
         }
         row.addView(button,LinearLayout.LayoutParams(0,dp(50),weight).apply { setMargins(dp(2),dp(3),dp(2),dp(3)) })
         return button
@@ -127,14 +150,16 @@ class ReaxKeyService : InputMethodService() {
         alternatives.forEach { value -> key(row,value,value,dark) { commit(state.text(value,Locale.forLanguageTag(pack.tag))); popup?.dismiss(); render() } }
         popup?.showAsDropDown(anchor,0,-dp(112))
     }
-    private fun commit(text:String) { currentInputConnection?.commitText(text,1) }
+    private fun commit(text:String) { if(mediaMode) mediaPanel.append(text) else currentInputConnection?.commitText(text,1) }
     private fun delete() {
+        if(mediaMode) {mediaPanel.delete();return}
         val connection=currentInputConnection ?: return
         // Read only for an explicit deletion; never retain editor text.
         if(!connection.getSelectedText(0).isNullOrEmpty()) connection.commitText("",1)
         else connection.deleteSurroundingTextInCodePoints(1,0)
     }
     private fun enter() {
+        if(mediaMode) {searching=false;render();return}
         val editor=currentInputEditorInfo ?: return
         val action=editor.imeOptions and EditorInfo.IME_MASK_ACTION
         if(editor.actionLabel!=null && editor.actionId!=0) currentInputConnection?.performEditorAction(editor.actionId)
