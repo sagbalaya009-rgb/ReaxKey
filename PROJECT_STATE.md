@@ -18,3 +18,10 @@
 - Pending: media/data/search/collections/settings/testbed/release pipeline, substantial device tests and full definition-of-done gates.
 
 The synced parent sources directory is read-only and is not part of this checkout.
+
+## Typing implementation checkpoint
+- Integrated shift/caps, numbers/symbols, editor actions, numeric/email/URL fields, secure-field behavior, held-delete, language switching/alternatives, emoji and dark mode.
+- Executed test/lint/assembleDebug again: passed, 10 tests; physical behavior remains unverified.
+- Added launcher icon and explicit backup exclusions. Remaining lint notices are dependency updates and an accessibility touch-listener advisory requiring device validation.
+- Next: Room/DataStore, media ingestion, and testbed.
+

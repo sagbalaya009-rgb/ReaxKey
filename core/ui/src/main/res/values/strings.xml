@@ -1,4 +1,12 @@
 <resources>
+    <string name="more_symbols">More symbols</string>
+    <string name="emoji">Emoji</string>
+    <string name="change_language">Change language</string>
+    <string name="action_go">Go</string>
+    <string name="action_search">Search</string>
+    <string name="action_send">Send</string>
+    <string name="action_next">Next</string>
+    <string name="action_done">Done</string>
     <string name="app_name">ReaxKey</string>
     <string name="language_english">English</string>
     <string name="welcome_title">Your reactions. Your keyboard.</string>

@@ -15,3 +15,4 @@ secrets.properties
 **/build/
 .kotlin/
 .android/
+*.log
