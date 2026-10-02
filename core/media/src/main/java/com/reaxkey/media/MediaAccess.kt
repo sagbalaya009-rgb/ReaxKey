@@ -51,9 +51,16 @@ class MediaAccess(private val context:Context,private val repository:MediaReposi
                 }
                 "MEDIASTORE" -> {
                     val base=MediaStore.Images.Media.EXTERNAL_CONTENT_URI
-                    resolver.query(base,arrayOf(MediaStore.Images.Media._ID,MediaStore.Images.Media.DISPLAY_NAME,MediaStore.Images.Media.SIZE,MediaStore.Images.Media.DATE_MODIFIED),null,null,null)?.use { cursor ->
-                        while(cursor.moveToNext()) index(ContentUris.withAppendedId(base,cursor.getLong(0)),cursor.getString(1) ?: "",cursor.getLong(2),cursor.getLong(3)*1000)
+                    val projection=mutableListOf(MediaStore.Images.Media._ID,MediaStore.Images.Media.DISPLAY_NAME,MediaStore.Images.Media.SIZE,MediaStore.Images.Media.DATE_MODIFIED)
+                    if(android.os.Build.VERSION.SDK_INT>=29) projection+=MediaStore.Images.Media.RELATIVE_PATH
+                    resolver.query(base,projection.toTypedArray(),"${MediaStore.Images.Media.MIME_TYPE} IN (?,?,?,?)",MediaRules.supported.toTypedArray(),null)?.use { cursor ->
+                        while(cursor.moveToNext()) {
+                            ensureActive()
+                            val bucket=SourceAttribution.bucket(if(android.os.Build.VERSION.SDK_INT>=29) cursor.getString(4) else null)
+                            if(source.uri.isEmpty() || source.uri==bucket) index(ContentUris.withAppendedId(base,cursor.getLong(0)),cursor.getString(1) ?: "",cursor.getLong(2),cursor.getLong(3)*1000)
+                        }
                     } ?: throw IOException("Provider unavailable")
+                    if(count==0 && SourceDiscoveryEngine.accessLevel(context)==MediaAccessLevel.NONE) throw SecurityException()
                 }
                 "IMPORTED" -> imports.listFiles()?.filter { !it.name.endsWith(".part") }?.forEach { file ->
                     val uri=FileProvider.getUriForFile(context,"${context.packageName}.media",file)
@@ -99,7 +106,9 @@ class MediaAccess(private val context:Context,private val repository:MediaReposi
             val file=File(imports,hash.digest().joinToString("") { "%02x".format(it) }+".$extension")
             if(!file.exists() && !temporary.renameTo(file)) throw IOException("Cannot save media")
             if(repository.source("imports")==null) repository.putSource(MediaSource("imports","IMPORTED",context.getString(com.reaxkey.media.R.string.imported_source)))
-            repository.index(metadata.copy(uri=FileProvider.getUriForFile(context,"${context.packageName}.media",file).toString()),System.currentTimeMillis())
+            val id=repository.index(metadata.copy(uri=FileProvider.getUriForFile(context,"${context.packageName}.media",file).toString()),System.currentTimeMillis())
+            repository.restore(id)
+            id
         } finally { temporary.delete() }
     }
     suspend fun deleteOwned(item:MediaItem)=withContext(Dispatchers.IO) {

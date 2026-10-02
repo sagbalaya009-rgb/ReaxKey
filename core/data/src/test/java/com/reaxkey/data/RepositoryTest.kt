@@ -17,6 +17,26 @@ class RepositoryTest {
     private lateinit var repo:LocalRepository
     @Before fun setup() { db=Room.inMemoryDatabaseBuilder(ApplicationProvider.getApplicationContext(),ReaxDatabase::class.java).allowMainThreadQueries().build(); repo=LocalRepository(db) }
     @After fun close() { db.close() }
+    @Test fun explicitReimportRestoresRemovalWithoutDiscardingFavorites()=runBlocking {
+        repo.putSource(MediaSource("imports","IMPORTED","Imports"))
+        val id=repo.index(MediaItem(sourceId="imports",uri="content://test/a",name="a",mime="image/png",kind="IMAGE"),1)
+        repo.favorite(id,true);repo.remove(id);repo.disconnect("imports")
+        repo.restore(id)
+        assertTrue(repo.item(id)!!.favorite)
+        assertEquals(1,repo.observe(MediaQuery()).first().size)
+        assertEquals(1,repo.source("imports")!!.count)
+    }
+    @Test fun duplicateUriAcrossSourcesKeepsOneLogicalReactionAndUserMetadata()=runBlocking {
+        repo.putSource(MediaSource("a","MEDIASTORE","Phone"));repo.putSource(MediaSource("b","MEDIASTORE","Pictures"))
+        val item=MediaItem(sourceId="a",uri="content://media/external/images/media/12",name="x",mime="image/png",kind="IMAGE")
+        val id=repo.index(item,1);repo.favorite(id,true)
+        assertEquals(id,repo.index(item.copy(sourceId="b"),2))
+        assertEquals(1,repo.observe(MediaQuery()).first().size)
+        repo.disconnect("a")
+        assertEquals(id,repo.index(item.copy(sourceId="b"),3))
+        assertTrue(repo.item(id)!!.favorite)
+        assertEquals(1,repo.observe(MediaQuery()).first().size)
+    }
     @Test fun scanFinishingAfterDisconnectCannotRestoreSource()=runBlocking {
         repo.putSource(MediaSource("s","SAF_TREE","Folder"))
         val item=MediaItem(sourceId="s",uri="content://test/a",name="a",mime="image/png",kind="IMAGE")

@@ -27,6 +27,7 @@ data class Membership(val collectionId:Long,val mediaId:Long,val added:Long=Syst
     @Query("SELECT * FROM source WHERE id=:id") suspend fun source(id:String):SourceRow?
     @Upsert suspend fun source(source:SourceRow)
     @Query("SELECT * FROM media WHERE sourceId=:source AND uri=:uri") suspend fun find(source:String,uri:String):MediaRow?
+    @Query("SELECT * FROM media WHERE uri=:uri ORDER BY owned DESC,id LIMIT 1") suspend fun findUri(uri:String):MediaRow?
     @Query("SELECT * FROM media WHERE id=:id") suspend fun item(id:Long):MediaRow?
     @Upsert suspend fun upsert(item:MediaRow):Long
     @Insert(onConflict=OnConflictStrategy.REPLACE) suspend fun search(item:SearchRow)
@@ -35,6 +36,7 @@ data class Membership(val collectionId:Long,val mediaId:Long,val added:Long=Syst
     @Query("UPDATE media SET available=0 WHERE id=:id") suspend fun unavailable(id:Long)
     @Query("UPDATE media SET favorite=:value WHERE id=:id") suspend fun favorite(id:Long,value:Boolean)
     @Query("UPDATE media SET removed=1 WHERE id=:id") suspend fun remove(id:Long)
+    @Query("UPDATE media SET removed=0,available=1 WHERE id=:id") suspend fun restore(id:Long)
     @Query("UPDATE media SET usage=usage+1,lastUsed=:now WHERE id=:id") suspend fun use(id:Long,now:Long)
     @Insert suspend fun collection(value:CollectionRow):Long
     @Insert(onConflict=OnConflictStrategy.IGNORE) suspend fun add(value:Membership)

@@ -16,7 +16,8 @@ class LocalRepository(private val db:ReaxDatabase):MediaRepository {
     override suspend fun find(source:String,uri:String)=dao.find(source,uri)?.let(::model)
     override suspend fun item(id:Long)=dao.item(id)?.let(::model)
     override suspend fun index(item:MediaItem,generation:Long):Long=db.withTransaction {
-        val old=dao.find(item.sourceId,item.uri)
+        val old=dao.find(item.sourceId,item.uri) ?: dao.findUri(item.uri)
+        if(old!=null && old.sourceId!=item.sourceId && old.available && dao.source(old.sourceId)?.enabled==true) return@withTransaction old.id
         val row=MediaRow(old?.id ?: 0,item.sourceId,item.uri,item.name,item.mime,old?.kind ?: item.kind,item.width,item.height,item.size,item.modified,item.animated,item.available,
             old?.label ?: item.label,old?.favorite ?: item.favorite,old?.usage ?: 0,old?.lastUsed ?: 0,item.owned,old?.removed ?: false,old?.tags ?: item.tags,old?.created ?: item.created,System.currentTimeMillis(),generation)
         val inserted=dao.upsert(row); val id=old?.id ?: inserted
@@ -33,7 +34,7 @@ class LocalRepository(private val db:ReaxDatabase):MediaRepository {
         val source=dao.source(id) ?: return@withTransaction
         if(!source.enabled) {dao.unavailableSource(id);return@withTransaction}
         if(health=="OK") dao.stale(id,generation) else dao.unavailableSource(id)
-        dao.source(source.copy(health=health,lastScan=System.currentTimeMillis(),lastSuccess=if(health=="OK") System.currentTimeMillis() else source.lastSuccess,count=count))
+        dao.source(source.copy(health=health,lastScan=System.currentTimeMillis(),lastSuccess=if(health=="OK") System.currentTimeMillis() else source.lastSuccess,count=dao.sourceCount(id)))
     }
     override suspend fun markUnavailable(id:Long)=dao.unavailable(id)
     override suspend fun favorite(id:Long,value:Boolean)=dao.favorite(id,value)
@@ -46,6 +47,11 @@ class LocalRepository(private val db:ReaxDatabase):MediaRepository {
         Unit
     }
     override suspend fun recordUse(id:Long)=dao.use(id,System.currentTimeMillis())
+    override suspend fun restore(id:Long)=db.withTransaction {
+        dao.restore(id)
+        dao.item(id)?.let {item->dao.source(item.sourceId)?.let {dao.source(it.copy(enabled=true,health="OK",count=dao.sourceCount(it.id)))}}
+        Unit
+    }
     override suspend fun createCollection(name:String) { if(name.isNotBlank()) dao.collection(CollectionRow(name=name.trim().take(100))) }
     override suspend fun membership(collection:Long,media:Long,add:Boolean)=db.withTransaction {
         if(add) dao.add(Membership(collection,media)) else dao.removeMembership(collection,media)

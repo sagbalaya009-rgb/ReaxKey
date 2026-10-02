@@ -26,6 +26,7 @@ interface MediaRepository {
     suspend fun favorite(id:Long,value:Boolean)
     suspend fun edit(id:Long,label:String,tags:String,kind:String)
     suspend fun remove(id:Long)
+    suspend fun restore(id:Long)
     suspend fun recordUse(id:Long)
     suspend fun createCollection(name:String)
     suspend fun membership(collection:Long,media:Long,add:Boolean)

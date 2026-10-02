@@ -12,7 +12,7 @@ import com.reaxkey.model.SetupState
 import com.reaxkey.ui.R
 
 @Composable
-fun SetupScreen(state: SetupState, enable: () -> Unit, select: () -> Unit) {
+fun SetupScreen(state: SetupState, enable: () -> Unit, select: () -> Unit,find:()->Unit={},hasReactions:Boolean=false) {
     var testText by remember { mutableStateOf("") }
     Column(Modifier.fillMaxSize().safeDrawingPadding().verticalScroll(rememberScrollState()).padding(24.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
         Text(stringResource(R.string.app_name), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
@@ -29,6 +29,7 @@ fun SetupScreen(state: SetupState, enable: () -> Unit, select: () -> Unit) {
         }))
         Button(onClick = enable, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.enable_keyboard)) }
         OutlinedButton(onClick = select, modifier = Modifier.fillMaxWidth(), enabled = state != SetupState.NOT_ENABLED) { Text(stringResource(R.string.select_keyboard)) }
+        com.reaxkey.ui.ReaxButton((if(hasReactions) "✓ " else "3  ")+stringResource(R.string.add_reactions),find,state==SetupState.SELECTED)
         Text(stringResource(R.string.test_title), style = MaterialTheme.typography.titleLarge)
         OutlinedTextField(value = testText, onValueChange = { testText = it }, label = { Text(stringResource(R.string.test_hint)) }, modifier = Modifier.fillMaxWidth())
         Text(stringResource(R.string.test_privacy), style = MaterialTheme.typography.bodySmall)

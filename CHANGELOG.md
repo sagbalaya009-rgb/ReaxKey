@@ -11,3 +11,5 @@
 
 This is a development entry, not a production release or compatibility claim.
 See PROJECT_STATE.md for executed checks and outstanding gates.
+
+- Added evidence-based automatic reaction discovery, partial-access states, guided reconnect, source home, share previews and bulk collection assignment. Verified discovery before media permission on TECNO KL5; broader discovery awaits owner approval.
