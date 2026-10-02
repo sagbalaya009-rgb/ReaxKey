@@ -39,3 +39,5 @@ Play signing/account/listing/policy and real purchase/update validation remain o
 
 Parent sources remain read-only and untouched. Current APK is app/build/outputs/apk/debug/app-debug.apk;
 receiver APK is testbed/build/outputs/apk/debug/testbed-debug.apk.
+
+CI follow-up: Linux valid import passed; invalid-image test exposed AndroidX's cached test-directory root. Test setup now reattaches the provider with actual manifest metadata for each Robolectric sandbox. Local app tests pass again; Linux rerun pending.

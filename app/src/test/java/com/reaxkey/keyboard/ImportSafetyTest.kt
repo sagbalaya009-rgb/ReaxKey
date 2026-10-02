@@ -16,6 +16,12 @@ import java.io.File
 
 @RunWith(RobolectricTestRunner::class) @Config(sdk=[35])
 class ImportSafetyTest {
+    @Before fun attachProviderForThisTestSandbox() {
+        val app=ApplicationProvider.getApplicationContext<ReaxApplication>()
+        // AndroidX caches canonical roots by authority. Each Robolectric test has a new dataDir.
+        val info=app.packageManager.resolveContentProvider("${app.packageName}.media",android.content.pm.PackageManager.GET_META_DATA)!!
+        FileProvider().attachInfo(app,info)
+    }
     @Test fun identicalImportsDeduplicateAndIndexRemovalKeepsOriginal()=runBlocking {
         val app=ApplicationProvider.getApplicationContext<ReaxApplication>()
         org.junit.Assume.assumeTrue("AndroidX FileProvider requires Unix paths; exercised by Linux CI and device tests", File.separatorChar == '/')
