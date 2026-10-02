@@ -15,6 +15,11 @@ Observed on 2026-10-02. Do not infer third-party compatibility from the test rec
 
 TECNO KL5, Android 14: before media permission, the app found four existing app-owned QA imports.
 It displayed Phone media with a permission choice and did not claim WhatsApp or Telegram was found.
-Android's runtime permission dialog appeared only after Check shared images was tapped.
-User selection is pending at the time of this note. App-associated shared media, guided tree
-positioning, persisted access across restart and post-discovery IME delivery remain UNVERIFIED.
+Android's runtime permission dialog appeared only after Check shared images was tapped. The owner
+subsequently granted image access in Android; the app reported full access and the phone exposed
+1,415 WhatsApp-attributed image records plus two in Downloads. These are MIME-filtered accessible
+image counts, not verified personal reaction counts. The discovery screen explicitly warns that
+some may be ordinary photos. The four app-owned imports were checked by default; WhatsApp and
+Downloads were unchecked until explicitly selected. No phone media was bulk-added in this test.
+Guided tree positioning, persisted access across restart and post-discovery IME delivery remain
+UNVERIFIED.

@@ -16,6 +16,13 @@ class DiscoveryTest {
         val result=SharedMediaRecognizer("whatsapp").discover(DiscoverySnapshot(MediaAccessLevel.SELECTED,mapOf("whatsapp" to 7))).single()
         assertEquals(7,result.count);assertEquals(DiscoveryStatus.PARTIALLY_AVAILABLE,result.status)
     }
+    @Test fun broadSharedMediaNeedsExplicitSelectionBeforeAdding() {
+        val shared=SharedMediaRecognizer("whatsapp").discover(DiscoverySnapshot(MediaAccessLevel.FULL,mapOf("whatsapp" to 1415))).single()
+        val imported=SourceCandidate(MediaSource("imports","IMPORTED","Imported"),DiscoveryStatus.AVAILABLE,4,SourceConfidence.EXACT)
+        assertEquals(SourceConfidence.MEDIUM,shared.confidence)
+        assertFalse(shared.autoSelected())
+        assertTrue(imported.autoSelected())
+    }
     @Test fun independentRecognizersUseExclusiveCounts() {
         val paths=listOf("Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Stickers/","Download/","Pictures/","DCIM/")
         val counts=paths.groupingBy(SourceAttribution::bucket).eachCount()

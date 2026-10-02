@@ -45,8 +45,10 @@ fun sourceNameResource(source:MediaSource):Int=when {
 @Composable fun DiscoveryScreen(started:Boolean,checking:Boolean,candidates:List<SourceCandidate>,failed:Boolean,
     find:()->Unit,add:(List<SourceCandidate>)->Unit,grant:(SourceCandidate)->Unit,permission:()->Unit,import:()->Unit,more:()->Unit) {
     var privacy by remember {mutableStateOf(false)}
+    var included by rememberSaveable {mutableStateOf(emptyList<String>())}
     var excluded by rememberSaveable {mutableStateOf(emptyList<String>())}
     val available=candidates.filter {it.status in listOf(DiscoveryStatus.AVAILABLE,DiscoveryStatus.PARTIALLY_AVAILABLE) && (it.count ?: 0)>0}
+    fun selected(candidate:SourceCandidate)=candidate.source.id in included || (candidate.autoSelected() && candidate.source.id !in excluded)
     val visible=candidates.filter {it.status!=DiscoveryStatus.NOT_FOUND}
     LazyColumn(Modifier.fillMaxSize().padding(20.dp),verticalArrangement=Arrangement.spacedBy(18.dp)) {
         item {Text(stringResource(when {checking->R.string.looking_title;!started->R.string.find_title;available.isNotEmpty()->R.string.discovery_found;else->R.string.nothing_title}),style=MaterialTheme.typography.headlineLarge)}
@@ -59,7 +61,10 @@ fun sourceNameResource(source:MediaSource):Int=when {
             Card(Modifier.fillMaxWidth()) {Column(Modifier.padding(20.dp),verticalArrangement=Arrangement.spacedBy(10.dp)) {
                 Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween) {
                     Text(stringResource(sourceNameResource(candidate.source)),style=MaterialTheme.typography.titleLarge)
-                    if(candidate in available) Checkbox(candidate.source.id !in excluded,{enabled->excluded=if(enabled) excluded-candidate.source.id else excluded+candidate.source.id})
+                    if(candidate in available) Checkbox(selected(candidate),{enabled->
+                        if(enabled) {included=included+candidate.source.id;excluded=excluded-candidate.source.id}
+                        else {included=included-candidate.source.id;excluded=excluded+candidate.source.id}
+                    })
                 }
                 when(candidate.status) {
                     DiscoveryStatus.AVAILABLE,DiscoveryStatus.PARTIALLY_AVAILABLE -> {
@@ -80,7 +85,7 @@ fun sourceNameResource(source:MediaSource):Int=when {
                 }
             }}
         }
-        if(!checking && available.isNotEmpty()) item {ReaxButton(stringResource(R.string.add_reactions),{add(available.filter {it.source.id !in excluded})},available.any {it.source.id !in excluded})}
+        if(!checking && available.isNotEmpty()) item {ReaxButton(stringResource(R.string.add_reactions),{add(available.filter(::selected))},available.any(::selected))}
         if(started && !checking && available.isEmpty()) item {ReaxButton(stringResource(R.string.import_phone),import)}
         item {TextButton(onClick=more){Text(stringResource(R.string.add_reactions))}}
     }

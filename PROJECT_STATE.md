@@ -1,10 +1,10 @@
 # Project State
 
-## Current checkpoint — automatic discovery implemented; device permission pending
+## Current checkpoint — automatic discovery tested with phone media access
 
 Branch: build/full-reaxkey. Draft PR: https://github.com/sagbalaya009-rgb/ReaxKey/pull/1
-Prior pushed checkpoint: 805ffa3; GitHub CI run 36974128678 passed on Linux, including both
-FileProvider import tests. Current discovery changes are being verified for a new commit.
+Pushed discovery checkpoint: ad895e7. Prior GitHub CI run 36974128678 passed on Linux,
+including both FileProvider import tests. Remote status for ad895e7 is pending verification.
 
 ## Implemented in this stage
 
@@ -18,18 +18,24 @@ FileProvider import tests. Current discovery changes are being verified for a ne
   removed media while preserving favorites; background rescans preserve removal tombstones.
 - Exact stable URI deduplication across source records and metadata preservation on source handover.
 - Source health reconciliation for lost tree grants and revoked shared-media access.
+- Shared image groups use medium reaction confidence and are unchecked by default. Discovery
+  describes them as possible reaction images, including ordinary photos; app-owned and granted
+  exact sources remain preselected.
 
 ## Executed evidence
 
-- Discovery debug build, unit tests and lint passed. Final suite has 54 tests: 52 passed,
-  two Windows-only FileProvider skips; revoked-permission regression passed.
+- Latest discovery debug build, unit tests and lint passed with reduced Gradle concurrency after
+  one host out-of-memory daemon crash. Final suite has 55 tests: 53 passed, two Windows-only
+  FileProvider skips; revoked-permission and broad-media-selection regressions passed.
 - Unsigned discovery release AAB built successfully (902 tasks). Final health adjustments require
   another CI release build; no production signing credentials or publication.
-- New discovery build installed on TECNO KL5 / Android 14 (API 34). Onboarding, source home and
+- Latest discovery build installed on TECNO KL5 / Android 14 (API 34). Onboarding, source home and
   discovery rendered and responded. Before permission, four app-owned QA imports were found;
   Phone media offered access choices; no WhatsApp/Telegram source was fabricated.
-- Android runtime dialog is OPEN awaiting the owner's choice: Allow limited access / Allow all /
-  Don't allow. Do not automatically accept this choice or any directory approval.
+- The owner granted image access in Android. The phone then exposed 1,415 WhatsApp-attributed
+  image records and two Downloads image records. These are accessible image counts, not verified
+  reaction counts. Both shared-media groups were unchecked by default; only the four imported
+  QA reactions were checked. No personal media was bulk-added.
 - Previous physical tests: three native-provider/import tests passed. Keyboard typed hi; receiver
   read PNG 320, JPEG 816, GIF 42 and WebP 586 bytes through temporary URI grants. Unsupported-field
   explanation/Share action observed. See docs/COMPATIBILITY_MATRIX.md for limits.
@@ -37,10 +43,9 @@ FileProvider import tests. Current discovery changes are being verified for a ne
 
 ## Next exact actions
 
-Latest tests/lint/debug passed (556 tasks); commit and verify Linux CI. After owner chooses
-phone access, rerun/observe discovery, add selected sources, verify real counts and immediate IME
-availability. If a saved source needs access, use its known URI hint and let the owner approve the
-Android directory. Verify persistence after app/IME recreation and record WhatsApp facts.
+Commit and verify Linux CI. With explicit user source selection, add chosen sources, verify
+ingested counts and immediate IME availability. If a saved source needs access, use its known URI
+hint and let the owner approve the Android directory. Verify persistence after app/IME recreation.
 
 ## Remaining gates and limits
 
@@ -52,6 +57,5 @@ applied to current screens. Do not claim full product completion.
 
 Parent sources remain read-only. Artifacts: app/build/outputs/apk/debug/app-debug.apk,
 testbed/build/outputs/apk/debug/testbed-debug.apk, app/build/outputs/bundle/release/app-release.aab.
-The phone currently holds the discovery build from the successful build-discovery-check.log run;
-subsequent test/wave/health refinements await installation after the permission choice.
+The phone holds the latest successful build-discovery-device-fix-retry.log debug APK.
 

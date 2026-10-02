@@ -4,6 +4,7 @@ enum class DiscoveryStatus { AVAILABLE, AVAILABLE_REQUIRES_USER_GRANT, PARTIALLY
 enum class SourceConfidence { EXACT, HIGH, MEDIUM, UNKNOWN }
 enum class MediaAccessLevel { FULL, SELECTED, NONE }
 data class SourceCandidate(val source:MediaSource,val status:DiscoveryStatus,val count:Int?=null,val confidence:SourceConfidence=SourceConfidence.UNKNOWN,val initialUri:String?=null)
+fun SourceCandidate.autoSelected():Boolean=confidence==SourceConfidence.EXACT
 data class DiscoverySnapshot(val access:MediaAccessLevel,val sharedCounts:Map<String,Int> = emptyMap(),val grants:List<SourceCandidate> = emptyList(),val imports:SourceCandidate?=null,val sharedError:Boolean=false)
 interface MediaSourceRecognizer { val sourceId:String; fun discover(snapshot:DiscoverySnapshot):List<SourceCandidate> }
 
@@ -19,7 +20,7 @@ class SharedMediaRecognizer(override val sourceId:String):MediaSourceRecognizer 
         }
         return listOf(SourceCandidate(MediaSource("discovered-$sourceId","MEDIASTORE",sourceId,sourceId),status,
             if(status==DiscoveryStatus.PERMISSION_REQUIRED || status==DiscoveryStatus.ERROR) null else count,
-            if(sourceId=="phone") SourceConfidence.UNKNOWN else SourceConfidence.HIGH))
+            if(sourceId=="phone") SourceConfidence.UNKNOWN else SourceConfidence.MEDIUM))
     }
 }
 class ExistingSafGrantRecognizer:MediaSourceRecognizer {

@@ -7,8 +7,8 @@
     <string name="looking_body">Checking your phone for stickers, GIFs and reaction images.</string>
     <string name="discovery_privacy_title">What does ReaxKey check?</string>
     <string name="discovery_privacy_body">Only media your phone allows ReaxKey to access. We can’t read private chats or another app’s private files.</string>
-    <string name="discovery_found">We found your reactions.</string>
-    <string name="discovery_candidates">Choose what to add. We’ll check that each image can be opened.</string>
+    <string name="discovery_found">We found images you can use.</string>
+    <string name="discovery_candidates">Choose what to add. Some images may be ordinary photos. We’ll check that each image can be opened.</string>
     <string name="nothing_title">Nothing yet.</string>
     <string name="nothing_body">Some apps keep their reactions private. That’s okay — you can still bring them into ReaxKey.</string>
     <string name="phone_source">Phone media</string>
