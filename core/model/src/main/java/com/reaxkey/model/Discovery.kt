@@ -34,14 +34,21 @@ class ReaxKeyImportRecognizer:MediaSourceRecognizer {
 
 /** Metadata path segments, never file-name guesses. Buckets partition shared media. */
 object SourceAttribution {
-    val sharedIds=listOf("whatsapp-business","whatsapp","telegram","downloads","pictures","phone")
+    val sharedIds=listOf("whatsapp-business","whatsapp","phone")
+    // A metadata hint narrows the provider query; bucket() still verifies exact path segments.
+    val stickerPathHints=listOf("%/WhatsApp Stickers/%","%/WhatsApp Business Stickers/%")
     fun bucket(relativePath:String?):String {
         val segments=relativePath.orEmpty().lowercase().split('/').filter {it.isNotBlank()}
-        fun packageMedia(id:String)=segments.take(3)==listOf("android","media",id)
-        if(packageMedia("com.whatsapp.w4b") || segments.take(2)==listOf("whatsapp business","media")) return "whatsapp-business"
-        if(packageMedia("com.whatsapp") || segments.take(2)==listOf("whatsapp","media")) return "whatsapp"
-        if(packageMedia("org.telegram.messenger") || segments.firstOrNull()=="telegram" || segments.take(2)==listOf("pictures","telegram")) return "telegram"
-        return when(segments.firstOrNull()) {"download","downloads"->"downloads";"pictures"->"pictures";else->"phone"}
+        val marker=segments.lastIndexOf("media")
+        if(marker<0 || marker+1>=segments.size) return "none"
+        val sticker=segments[marker+1]
+        if(sticker !in listOf("whatsapp stickers","whatsapp business stickers")) return "none"
+        val before=segments.take(marker)
+        if(before==listOf("whatsapp") || before==listOf("android","media","com.whatsapp","whatsapp"))
+            return if(sticker=="whatsapp stickers") "whatsapp" else "none"
+        if(before==listOf("whatsapp business") || before==listOf("android","media","com.whatsapp.w4b","whatsapp business"))
+            return "whatsapp-business"
+        return "none"
     }
     fun allowedTreeId(id:String):Boolean {
         val path=id.substringAfter(':',"").trim('/').lowercase()

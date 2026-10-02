@@ -54,14 +54,14 @@ class DiscoveryEngineTest {
         assertEquals(1,p.queries)
         assertEquals(10000,results.last {it.source.uri=="whatsapp"}.count)
         assertTrue(results.count {it.source.uri=="whatsapp"}>1)
-        assertEquals(1,results.last {it.source.uri=="downloads"}.count)
+        assertTrue(results.none {it.source.uri=="downloads"})
     }
     @Test fun selectedPermissionIsReflectedInEveryAccessibleSource()=runBlocking {
         val app=ApplicationProvider.getApplicationContext<ReaxApplication>()
         Shadows.shadowOf(app).grantPermissions(android.Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED)
-        provider(listOf("Pictures/"))
+        provider(listOf("Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Stickers/"))
         val results=SourceDiscoveryEngine(app,app.repository).discover().toList()
-        assertEquals(DiscoveryStatus.PARTIALLY_AVAILABLE,results.last {it.source.uri=="pictures"}.status)
+        assertEquals(DiscoveryStatus.PARTIALLY_AVAILABLE,results.last {it.source.uri=="whatsapp"}.status)
     }
     @Test fun missingGrantAndInvalidCandidateHaveDifferentStates()=runBlocking {
         val app=ApplicationProvider.getApplicationContext<ReaxApplication>();provider(emptyList())

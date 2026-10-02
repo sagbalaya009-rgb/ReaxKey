@@ -1,8 +1,10 @@
 <resources>
-    <color name="keyboard_background">#EDEFF8</color>
-    <color name="keyboard_key">#FFFFFF</color>
-    <color name="keyboard_text">#17203A</color>
-    <color name="keyboard_background_dark">#0B0D10</color>
-    <color name="keyboard_key_dark">#202631</color>
-    <color name="keyboard_text_dark">#F3F5FA</color>
+    <color name="keyboard_background">#D9DDE2</color>
+    <color name="keyboard_key">#FAFAFB</color>
+    <color name="keyboard_function">#BEC5CC</color>
+    <color name="keyboard_text">#202124</color>
+    <color name="keyboard_background_dark">#25282C</color>
+    <color name="keyboard_key_dark">#454A50</color>
+    <color name="keyboard_function_dark">#363B40</color>
+    <color name="keyboard_text_dark">#F4F4F4</color>
 </resources>

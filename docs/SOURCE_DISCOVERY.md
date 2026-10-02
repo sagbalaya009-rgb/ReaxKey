@@ -1,47 +1,31 @@
-# Source discovery
+# Sticker source discovery
 
-Implementation in progress against the owner specification (2026-10-02).
+ReaxKey discovers stickers only from supported, public sources. On Android 10 and newer it asks
+MediaStore for WebP, PNG and GIF rows whose relative path names a recognized WhatsApp or WhatsApp
+Business Stickers directory. The source classifier checks complete path segments, including the
+WhatsApp package/location, rather than filenames or every phone image. DCIM, Camera, Screenshots,
+Downloads and general WhatsApp Images are not sticker sources. MediaStore results are candidates;
+indexing still checks decodable bounds and supported formats in a background worker.
 
-MediaSourceRecognizer consumes one metadata snapshot, avoiding repeated broad queries per app.
-SourceDiscoveryEngine publishes progressive, cancellable results. Recognizers select exclusive
-shared-media buckets (WhatsApp, WhatsApp Business, Telegram, Downloads, Pictures, generic phone),
-existing validated tree grants and imported files. Counts describe supported accessible metadata;
-indexing validates real decoder bounds and may yield fewer valid reactions. No fabricated counts.
+Some Android installations do not publish WhatsApp sticker files through MediaStore even when
+the files exist. The Stickers tab therefore offers **Select your WhatsApp Stickers folder**.
+Android's document picker receives the exact folder observed on the owner's phone as a location
+hint, not as a permission grant or a claim that the folder exists on every device. The user must
+approve the folder. ReaxKey persists the returned tree URI, validates it through the provider,
+then indexes its sticker files. A different folder can be chosen explicitly in Settings. Revoked
+grants appear as a source-health problem rather than being silently treated as empty.
+
+The initial discovery and refresh run outside the UI thread. The IME reads the local Room index;
+opening the keyboard does not rescan the directory. Imports are content-URI based. Imported bytes
+use a SHA-256 ID; stable source URIs deduplicate records. The migration to schema 3 hides broad
+legacy image rows, preserving user metadata for valid sticker records.
+
+Physical evidence on TECNO KL5 / Android 14: ADB observed
+`/storage/emulated/0/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Stickers` with 10,834
+WebP files. The redesigned app showed no automatic candidate despite granted image access.
+Picker grant, indexing and IME display of these files are pending physical verification.
 
 Android storage references:
 - https://developer.android.com/training/data-storage/shared/media
 - https://developer.android.com/training/data-storage/shared/documents-files
 - https://developer.android.com/about/versions/14/changes/partial-photo-video-access
-
-Physical source discovery, guided picker positioning and persisted-access behavior remain unverified
-until the new implementation is installed. Prior device typing and PNG/JPEG/GIF/WebP receiver tests
-passed on TECNO KL5 / Android 14. CI run 36974128678 passed for pre-discovery commit 805ffa3.
-
-## Implementation checkpoint
-
-Recognizers operate over a shared metadata snapshot. MediaStore rows are MIME-filtered and counted
-in a single query, with progressive results; individual files are decoded only during ingestion.
-Known shared-path patterns are candidate evidence, not guarantees. Filenames never determine app
-attribution. When relative-path metadata is unavailable, items remain generic Phone media.
-Existing grants are validated through their document provider and counted with cancellation.
-Generic providers may use opaque document IDs; only external-storage IDs receive path restrictions.
-
-The picker is launched only from an explicit grant explanation or the personal-folder fallback.
-Only real prior tree URIs are used as initial locations. No synthetic app-directory URI is presented
-as a found source. On return, a directory is validated and a persisted read grant is used.
-
-Shared source buckets are exclusive. Identical stable URIs across source records reuse the same
-logical media ID; disconnected sources can hand over to an accessible record while preserving
-favorite/label/collection state. Imported bytes deduplicate by SHA-256. Different providers that
-expose the same bytes under unrelated URIs are not globally hashed on every scan; this remains a
-practical deduplication limit. Explicit reimport restores a removed reaction; background rescans do not.
-
-New UI: discovery-first onboarding step, Add reactions, grouped sources, partial-access language,
-privacy disclosure, success screen, share preview and optional collection for bulk imports.
-The owner-referenced earlier Exact UI Redesign document was not available; the supplied dark
-background, blue/violet CTA and card guidance was applied to the current app.
-
-Automated coverage includes attribution, no source/denied metadata, partial access, progressive
-10k-row metadata, missing grants, invalid/private candidates, duplicate source URIs and reimport.
-Physical permission/reconnect, provider disappearance during a real scan, process death while a
-scan runs and animated-media performance are remaining test gates, not claimed as passed.

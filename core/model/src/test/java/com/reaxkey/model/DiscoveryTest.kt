@@ -23,18 +23,19 @@ class DiscoveryTest {
         assertFalse(shared.autoSelected())
         assertTrue(imported.autoSelected())
     }
-    @Test fun independentRecognizersUseExclusiveCounts() {
-        val paths=listOf("Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Stickers/","Download/","Pictures/","DCIM/")
+    @Test fun onlyKnownStickerDirectoriesBecomeSources() {
+        val paths=listOf("Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Stickers/","Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/","Download/","Pictures/","DCIM/")
         val counts=paths.groupingBy(SourceAttribution::bucket).eachCount()
         val snapshot=DiscoverySnapshot(MediaAccessLevel.FULL,counts)
         val results=SourceAttribution.sharedIds.flatMap {SharedMediaRecognizer(it).discover(snapshot)}
-        assertEquals(4,results.sumOf {it.count ?: 0})
-        assertEquals(4,results.count {it.status==DiscoveryStatus.AVAILABLE})
+        assertEquals(1,results.sumOf {it.count ?: 0})
+        assertEquals(1,results.count {it.status==DiscoveryStatus.AVAILABLE})
     }
     @Test fun filenameAndSubstringDoNotImpersonateApps() {
         for(path in listOf("Pictures/whatsapp-memes/","Download/not-whatsapp/","Pictures/whatsapp.png")) assertNotEquals("whatsapp",SourceAttribution.bucket(path))
-        assertEquals("whatsapp-business",SourceAttribution.bucket("Android/media/com.whatsapp.w4b/WhatsApp Business/Media/"))
-        assertEquals("telegram",SourceAttribution.bucket("Pictures/Telegram/"))
+        assertEquals("whatsapp-business",SourceAttribution.bucket("Android/media/com.whatsapp.w4b/WhatsApp Business/Media/WhatsApp Business Stickers/"))
+        assertEquals("none",SourceAttribution.bucket("Pictures/Telegram/"))
+        assertEquals("none",SourceAttribution.bucket("Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/"))
     }
     @Test fun duplicateGrantsCollapseWithoutHidingPermissionState() {
         val candidate=SourceCandidate(MediaSource("s","SAF_TREE","Folder","content://provider/tree/a"),DiscoveryStatus.AVAILABLE_REQUIRES_USER_GRANT)
@@ -56,6 +57,6 @@ class DiscoveryTest {
         assertTrue(SourceAttribution.allowedTreeId("primary:Android/media/com.whatsapp/WhatsApp/Media"))
     }
     @Test fun hugeCountsAreNotTruncatedOrFabricated() {
-        assertEquals(10000,SharedMediaRecognizer("pictures").discover(DiscoverySnapshot(MediaAccessLevel.FULL,mapOf("pictures" to 10000))).single().count)
+        assertEquals(10000,SharedMediaRecognizer("whatsapp").discover(DiscoverySnapshot(MediaAccessLevel.FULL,mapOf("whatsapp" to 10000))).single().count)
     }
 }

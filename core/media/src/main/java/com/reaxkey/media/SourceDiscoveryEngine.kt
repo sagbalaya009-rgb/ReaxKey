@@ -40,19 +40,24 @@ class SourceDiscoveryEngine(private val context:Context,private val repository:M
         val counts=mutableMapOf<String,Int>();var error=false
         val currentAccess=accessLevel(context)
         try {
-            val projection=mutableListOf(MediaStore.Images.Media.MIME_TYPE)
-            if(Build.VERSION.SDK_INT>=29) projection+=MediaStore.Images.Media.RELATIVE_PATH
-            context.contentResolver.query(MediaStore.Images.Media.EXTERNAL_CONTENT_URI,projection.toTypedArray(),
-                "${MediaStore.Images.Media.MIME_TYPE} IN (?,?,?,?)",MediaRules.supported.toTypedArray(),null)?.use { cursor ->
+            // Without RELATIVE_PATH we cannot distinguish stickers from ordinary photos.
+            if(Build.VERSION.SDK_INT>=29) {
+            val projection=arrayOf(MediaStore.Images.Media.MIME_TYPE,MediaStore.Images.Media.RELATIVE_PATH)
+            val selection="${MediaStore.Images.Media.MIME_TYPE} IN (?,?,?) AND ("+
+                SourceAttribution.stickerPathHints.joinToString(" OR ") { "${MediaStore.Images.Media.RELATIVE_PATH} LIKE ?" }+")"
+            context.contentResolver.query(MediaStore.Images.Media.EXTERNAL_CONTENT_URI,projection,
+                selection,(StickerRules.supported+SourceAttribution.stickerPathHints).toTypedArray(),null)?.use { cursor ->
                 while(cursor.moveToNext()) {
                     currentCoroutineContext().ensureActive()
-                    val bucket=SourceAttribution.bucket(if(Build.VERSION.SDK_INT>=29) cursor.getString(1) else null)
+                    val bucket=SourceAttribution.bucket(cursor.getString(1))
+                    if(bucket=="none") continue
                     counts[bucket]=(counts[bucket] ?: 0)+1
                     if(counts.getValue(bucket)==1 || counts.getValue(bucket)%500==0) {
                         emit(SharedMediaRecognizer(bucket).discover(DiscoverySnapshot(currentAccess,counts.toMap())).single())
                     }
                 }
             } ?: run {error=true}
+            }
         } catch(e:CancellationException){throw e} catch(_:SecurityException){error=accessLevel(context)!=MediaAccessLevel.NONE} catch(_:Exception){error=true}
         val snapshot=DiscoverySnapshot(accessLevel(context),counts,grants,imports,error)
         for(recognizer in recognizers) {
@@ -82,7 +87,7 @@ class SourceDiscoveryEngine(private val context:Context,private val repository:M
                         currentCoroutineContext().ensureActive()
                         val mime=cursor.getString(1)
                         if(mime==DocumentsContract.Document.MIME_TYPE_DIR) queue.add(cursor.getString(0))
-                        else if(mime in MediaRules.supported) count++
+                        else if(mime in StickerRules.supported) count++
                     }
                 } ?: throw java.io.IOException()
             }

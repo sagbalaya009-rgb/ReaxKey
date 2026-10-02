@@ -11,7 +11,7 @@ Observed on 2026-10-02. Do not infer third-party compatibility from the test rec
 | WhatsApp chat composer | Unverified | Unverified | Unverified | Unverified | Unverified | Unverified | Unverified | No messages sent |
 | Telegram / Instagram / Snapchat / Discord / Messages | Unverified | Unverified | Unverified | Unverified | Unverified | Unverified | Unverified | No blanket claims |
 
-## Source discovery (new flow)
+## Earlier broad-image discovery (superseded)
 
 TECNO KL5, Android 14: before media permission, the app found four existing app-owned QA imports.
 It displayed Phone media with a permission choice and did not claim WhatsApp or Telegram was found.
@@ -21,5 +21,8 @@ subsequently granted image access in Android; the app reported full access and t
 image counts, not verified personal reaction counts. The discovery screen explicitly warns that
 some may be ordinary photos. The four app-owned imports were checked by default; WhatsApp and
 Downloads were unchecked until explicitly selected. No phone media was bulk-added in this test.
-Guided tree positioning, persisted access across restart and post-discovery IME delivery remain
-UNVERIFIED.
+That broad-image flow has been removed. The sticker-only build excludes Downloads, photos and
+general image folders; its app screen rendered an empty sticker state on the same phone despite
+granted image access. ADB confirmed 10,834 WebP files in the actual WhatsApp Stickers directory,
+but SAF folder approval, indexing, IME display and cross-app sticker delivery remain UNVERIFIED.
+The latest folder-picker hint is not yet installed on the phone.

@@ -43,8 +43,14 @@ object MediaRules {
     fun classify(mime:String,animated:Boolean,width:Int,height:Int):String = when {
         mime=="image/gif" -> "GIF"
         animated -> "ANIMATED_IMAGE"
-        mime in listOf("image/png","image/webp") && width in 1..512 && height in 1..512 -> "STICKER"
+        mime in listOf("image/png","image/webp") && width in 1..1024 && height in 1..1024 -> "STICKER"
         else -> "IMAGE"
     }
     fun contentUri(uri:String)=uri.startsWith("content://") && uri.length>10
+}
+
+object StickerRules {
+    val supported=listOf("image/webp","image/png","image/gif")
+    fun candidate(mime:String?,width:Int,height:Int):Boolean =
+        mime in supported && width in 1..1024 && height in 1..1024
 }

@@ -30,9 +30,10 @@ class MediaPanel(private val service:InputMethodService,private val scope:Corout
     private var session=0L
     private var grid:RecyclerView?=null
     private var label:TextView?=null
+    private var importButton:Button?=null
     private var popup:PopupWindow?=null
-    fun reset() {session++;query="";offset=0;queryJob?.cancel();sendJob?.cancel();popup?.dismiss();grid=null;label=null}
-    fun hide() {queryJob?.cancel();popup?.dismiss();grid=null;label=null}
+    fun reset() {session++;query="";offset=0;queryJob?.cancel();sendJob?.cancel();popup?.dismiss();grid=null;label=null;importButton=null}
+    fun hide() {queryJob?.cancel();popup?.dismiss();grid=null;label=null;importButton=null}
     fun append(value:String) {query=(query+value).take(200);offset=0;refresh()}
     fun delete() {if(query.isNotEmpty()) query=query.substring(0,query.offsetByCodePoints(query.length,-1));offset=0;refresh()}
     fun view(search:Boolean,dark:Boolean,onBack:()->Unit,onSearch:()->Unit):View {
@@ -50,6 +51,11 @@ class MediaPanel(private val service:InputMethodService,private val scope:Corout
         column.addView(HorizontalScrollView(service).apply {addView(tabs,ViewGroup.LayoutParams(dp(510),dp(48)))})
         grid=RecyclerView(service).apply {layoutManager=GridLayoutManager(service,4);adapter=Items(emptyList())}
         column.addView(grid,LinearLayout.LayoutParams(-1,dp(if(search) 100 else 210)))
+        importButton=Button(service).apply {
+            text=service.getString(R.string.import_stickers);isAllCaps=false;visibility=View.GONE
+            setOnClickListener {service.packageManager.getLaunchIntentForPackage(service.packageName)?.let {intent->service.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))}}
+        }
+        column.addView(importButton)
         if(!search) {val pages=LinearLayout(service);button(pages,service.getString(R.string.previous_page)){offset=(offset-80).coerceAtLeast(0);refresh()};button(pages,service.getString(R.string.next_page)){offset+=80;refresh()};column.addView(pages)}
         refresh();return column
     }
@@ -61,6 +67,7 @@ class MediaPanel(private val service:InputMethodService,private val scope:Corout
             try { repo.observe(MediaQuery(query,filter,limit=80,offset=offset)).collect {items ->
                 grid?.adapter=Items(items)
                 if(items.isEmpty()) label?.text=service.getString(R.string.empty_library)
+                importButton?.visibility=if(items.isEmpty()) View.VISIBLE else View.GONE
             }} catch(e:CancellationException){throw e} catch(_:Exception){label?.setText(R.string.operation_failed)}
         }
     }

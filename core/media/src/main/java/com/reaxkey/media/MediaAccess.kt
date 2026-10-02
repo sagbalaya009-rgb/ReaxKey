@@ -44,20 +44,22 @@ class MediaAccess(private val context:Context,private val repository:MediaReposi
                                 ensureActive()
                                 val id=cursor.getString(0); val mime=cursor.getString(2)
                                 if(mime==DocumentsContract.Document.MIME_TYPE_DIR) queue.add(id)
-                                else if(mime in MediaRules.supported || mime=="application/octet-stream") index(DocumentsContract.buildDocumentUriUsingTree(tree,id),cursor.getString(1) ?: "",cursor.getLong(3),cursor.getLong(4))
+                                else if(mime in StickerRules.supported || mime=="application/octet-stream") index(DocumentsContract.buildDocumentUriUsingTree(tree,id),cursor.getString(1) ?: "",cursor.getLong(3),cursor.getLong(4))
                             }
                         } ?: throw IOException("Provider unavailable")
                     }
                 }
                 "MEDIASTORE" -> {
                     val base=MediaStore.Images.Media.EXTERNAL_CONTENT_URI
-                    val projection=mutableListOf(MediaStore.Images.Media._ID,MediaStore.Images.Media.DISPLAY_NAME,MediaStore.Images.Media.SIZE,MediaStore.Images.Media.DATE_MODIFIED)
-                    if(android.os.Build.VERSION.SDK_INT>=29) projection+=MediaStore.Images.Media.RELATIVE_PATH
-                    resolver.query(base,projection.toTypedArray(),"${MediaStore.Images.Media.MIME_TYPE} IN (?,?,?,?)",MediaRules.supported.toTypedArray(),null)?.use { cursor ->
+                    if(android.os.Build.VERSION.SDK_INT<29) throw IOException("Choose a sticker folder on this Android version")
+                    val projection=arrayOf(MediaStore.Images.Media._ID,MediaStore.Images.Media.DISPLAY_NAME,MediaStore.Images.Media.SIZE,MediaStore.Images.Media.DATE_MODIFIED,MediaStore.Images.Media.RELATIVE_PATH)
+                    val selection="${MediaStore.Images.Media.MIME_TYPE} IN (?,?,?) AND ("+
+                        SourceAttribution.stickerPathHints.joinToString(" OR ") { "${MediaStore.Images.Media.RELATIVE_PATH} LIKE ?" }+")"
+                    resolver.query(base,projection,selection,(StickerRules.supported+SourceAttribution.stickerPathHints).toTypedArray(),null)?.use { cursor ->
                         while(cursor.moveToNext()) {
                             ensureActive()
-                            val bucket=SourceAttribution.bucket(if(android.os.Build.VERSION.SDK_INT>=29) cursor.getString(4) else null)
-                            if(source.uri.isEmpty() || source.uri==bucket) index(ContentUris.withAppendedId(base,cursor.getLong(0)),cursor.getString(1) ?: "",cursor.getLong(2),cursor.getLong(3)*1000)
+                            val bucket=SourceAttribution.bucket(cursor.getString(4))
+                            if(bucket!="none" && source.uri==bucket) index(ContentUris.withAppendedId(base,cursor.getLong(0)),cursor.getString(1) ?: "",cursor.getLong(2),cursor.getLong(3)*1000)
                         }
                     } ?: throw IOException("Provider unavailable")
                     if(count==0 && SourceDiscoveryEngine.accessLevel(context)==MediaAccessLevel.NONE) throw SecurityException()
@@ -82,7 +84,7 @@ class MediaAccess(private val context:Context,private val repository:MediaReposi
         val input=resolver.openInputStream(uri) ?: return null
         input.use { BitmapFactory.decodeStream(it,null,bounds) }
         val mime=bounds.outMimeType ?: return null
-        if(mime !in MediaRules.supported || bounds.outWidth<=0 || bounds.outHeight<=0) return null
+        if(!StickerRules.candidate(mime,bounds.outWidth,bounds.outHeight)) return null
         var animated=mime=="image/gif"
         if(mime=="image/webp") resolver.openInputStream(uri)?.use { stream ->
             val bytes=ByteArray(32); val read=stream.read(bytes)

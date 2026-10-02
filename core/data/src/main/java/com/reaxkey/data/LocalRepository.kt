@@ -61,7 +61,7 @@ class LocalRepository(private val db:ReaxDatabase):MediaRepository {
     override suspend fun diagnostics()="items=${dao.count()}\nsourceHealth=${dao.health().groupingBy { it }.eachCount()}\n"
     companion object {
         fun sql(q:MediaQuery):SimpleSQLiteQuery {
-            val where=mutableListOf("m.available=1","m.removed=0","m.sourceId IN (SELECT id FROM source WHERE enabled=1)"); val args=mutableListOf<Any>()
+            val where=mutableListOf("m.available=1","m.removed=0","m.kind IN ('STICKER','GIF','ANIMATED_IMAGE')","m.sourceId IN (SELECT id FROM source WHERE enabled=1)"); val args=mutableListOf<Any>()
             val normalized=Lexical.normalize(q.text)
             if(normalized.isNotEmpty()) { where.add("m.id IN (SELECT rowid FROM media_fts WHERE media_fts MATCH ?)"); args.add(Lexical.match(q.text)) }
             when(q.filter) {

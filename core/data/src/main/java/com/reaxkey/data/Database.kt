@@ -47,11 +47,18 @@ data class Membership(val collectionId:Long,val mediaId:Long,val added:Long=Syst
     @Query("SELECT health FROM source") suspend fun health():List<String>
 }
 
-@Database(entities=[MediaRow::class,SourceRow::class,CollectionRow::class,Membership::class,SearchRow::class],version=2,exportSchema=true)
+@Database(entities=[MediaRow::class,SourceRow::class,CollectionRow::class,Membership::class,SearchRow::class],version=3,exportSchema=true)
 abstract class ReaxDatabase:RoomDatabase() {
     abstract fun dao():MediaDao
     companion object {
         val MIGRATION_1_2=object:Migration(1,2) { override fun migrate(db:SupportSQLiteDatabase) { db.execSQL("ALTER TABLE media ADD COLUMN tagOrigin TEXT NOT NULL DEFAULT 'USER'") } }
-        fun open(context:Context)=Room.databaseBuilder(context,ReaxDatabase::class.java,"reaxkey.db").addMigrations(MIGRATION_1_2).build()
+        val MIGRATION_2_3=object:Migration(2,3) { override fun migrate(db:SupportSQLiteDatabase) {
+            // Previous releases indexed broad MediaStore groups containing ordinary photos.
+            // Preserve metadata but remove those records from the sticker browser.
+            db.execSQL("UPDATE media SET available=0 WHERE sourceId IN (SELECT id FROM source WHERE type='MEDIASTORE') OR mime='image/jpeg' OR width NOT BETWEEN 1 AND 1024 OR height NOT BETWEEN 1 AND 1024 OR kind='IMAGE'")
+            db.execSQL("UPDATE source SET enabled=0, health='DISCONNECTED', count=0 WHERE type='MEDIASTORE'")
+            db.execSQL("UPDATE source SET count=(SELECT COUNT(*) FROM media WHERE media.sourceId=source.id AND media.available=1 AND media.removed=0) WHERE type!='MEDIASTORE'")
+        } }
+        fun open(context:Context)=Room.databaseBuilder(context,ReaxDatabase::class.java,"reaxkey.db").addMigrations(MIGRATION_1_2,MIGRATION_2_3).build()
     }
 }

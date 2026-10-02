@@ -65,8 +65,34 @@ class KeyboardTest {
             service.editor.inputType=InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
             service.editor.imeOptions=EditorInfo.IME_ACTION_DONE
             service.onStartInput(service.editor,false);val view=service.onCreateInputView()
+            assertTrue(buttons(view).none {it.text=="Media"})
             buttons(view).first {it.text=="a"}.performClick();buttons(view).first {it.text=="Done"}.performClick()
             assertEquals(0,service.capsQueries);assertEquals(EditorInfo.IME_ACTION_DONE,service.action)
+        } finally {controller.destroy()}
+    }
+    @Test fun familiarRowsAndSymbolPagesReturnToLetters() {
+        val controller=Robolectric.buildService(KeyboardHarness::class.java).create();val service=controller.get()
+        try {
+            service.onStartInput(service.editor,false);val view=service.onCreateInputView()
+            val letters=buttons(view)
+            assertSame(letters.first {it.text=="z"}.parent,letters.first {it.contentDescription=="Shift"}.parent)
+            assertSame(letters.first {it.text=="m"}.parent,letters.first {it.contentDescription=="Delete"}.parent)
+            letters.first {it.text=="?123"}.performClick()
+            assertTrue(buttons(view).any {it.text=="1"})
+            buttons(view).first {it.text=="=\\<"}.performClick()
+            assertTrue(buttons(view).any {it.text=="©"})
+            buttons(view).first {it.text=="ABC"}.performClick()
+            assertTrue(buttons(view).any {it.text=="q"})
+        } finally {controller.destroy()}
+    }
+    @Test fun mediaPanelReturnsToTypingWithoutChangingHostText() {
+        val controller=Robolectric.buildService(KeyboardHarness::class.java).create();val service=controller.get()
+        try {
+            service.onStartInput(service.editor,false);val view=service.onCreateInputView()
+            buttons(view).first {it.text=="Media"}.performClick()
+            buttons(view).first {it.text=="ABC"}.performClick()
+            buttons(view).first {it.text=="h"}.performClick()
+            assertEquals("h",service.buffer.toString())
         } finally {controller.destroy()}
     }
 }

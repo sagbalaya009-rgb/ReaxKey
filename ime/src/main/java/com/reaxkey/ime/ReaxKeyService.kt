@@ -52,7 +52,7 @@ open class ReaxKeyService : InputMethodService() {
     }
     override fun onEvaluateFullscreenMode() = false
     override fun onCreateInputView(): View {
-        root = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(3),dp(5),dp(3),dp(5)) }
+        root = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(2),dp(2),dp(2),dp(4)) }
         render()
         return root
     }
@@ -87,66 +87,104 @@ open class ReaxKeyService : InputMethodService() {
             root.addView(mediaPanel.view(searching,dark,{mediaMode=false;mediaPanel.hide();render()},{searching=!searching;render()}))
             if(!searching) return
         }
+        val toolbar=KeyboardRow()
+        key(toolbar,"🌐",getString(R.string.switch_keyboard),dark,1f,true) {getSystemService(InputMethodManager::class.java).showInputMethodPicker()}
+        key(toolbar,pack.tag.uppercase(Locale.ROOT),getString(R.string.change_language),dark,1f,true) {
+            languageIndex=(languageIndex+1)%packs.size;scope.launch {preferences.language(pack.tag)};state.reset();render()
+        }
+        if(!sensitive) key(toolbar,getString(R.string.media),getString(R.string.media),dark,1.4f,true) {mediaMode=true;searching=false;state.reset();render()}
+        root.addView(toolbar)
         val rows=when {
-            numeric -> listOf(listOf("1","2","3"),listOf("4","5","6"),listOf("7","8","9"),listOf("-","0",pack.decimal))
+            numeric -> listOf(listOf("1","2","3"),listOf("4","5","6"),listOf("7","8","9"))
             emoji -> listOf(listOf("😀","😂","🥹","😍","😎","🤔"),listOf("😭","😡","🥳","🙏","👍","❤️"))
-            state.layer==Layer.NUMBERS -> listOf("1234567890","@#£€%&-+()","!?\"':;/.,").map { it.map(Char::toString) }
-            state.layer==Layer.SYMBOLS -> listOf("[]{}<>^*_=","\\|~`$¥•…÷×","©®™✓°§±").map { it.map(Char::toString) }
+            state.layer==Layer.NUMBERS -> listOf("1234567890","@#£€%&-+()","!?\"':;/.,").map {it.map(Char::toString)}
+            state.layer==Layer.SYMBOLS -> listOf("[]{}<>^*_=","\\|~`$¥•…÷×","©®™✓°§±").map {it.map(Char::toString)}
             else -> pack.rows
         }
-        rows.forEach { keys ->
-            val row=LinearLayout(this)
-            keys.forEach { key ->
-                val displayed=if(state.shift != Shift.OFF && !numeric) key.uppercase(Locale.forLanguageTag(pack.tag)) else key
+        rows.forEachIndexed { index,keys ->
+            val row=KeyboardRow()
+            if(index==1 && !numeric) row.setPadding(dp(16),0,dp(16),0)
+            if(index==2 && !numeric) {
+                if(state.layer==Layer.LETTERS && !emoji) key(row,when(state.shift) {Shift.OFF->"⇧";Shift.ONCE->"⬆";Shift.LOCKED->"⇪"},getString(R.string.key_shift),dark,1.4f,true) {state.shift(SystemClock.uptimeMillis());render()}
+                else key(row,if(state.layer==Layer.NUMBERS) "=\\<" else "?123",getString(R.string.more_symbols),dark,1.4f,true) {state.layer=if(state.layer==Layer.NUMBERS) Layer.SYMBOLS else Layer.NUMBERS;render()}
+            }
+            keys.forEach { value ->
+                val displayed=if(state.shift!=Shift.OFF && state.layer==Layer.LETTERS && !numeric) value.uppercase(Locale.forLanguageTag(pack.tag)) else value
                 val button=key(row,displayed,displayed,dark) {
                     val previousShift=state.shift
-                    commit(state.text(key,Locale.forLanguageTag(pack.tag))); updateCaps()
+                    commit(state.text(value,Locale.forLanguageTag(pack.tag)));updateCaps()
                     if(previousShift!=state.shift) render()
                 }
-                pack.alternatives[key]?.let { alternatives -> button.setOnLongClickListener { showAlternatives(button,alternatives,dark); true } }
+                pack.alternatives[value]?.let { alternatives -> button.setOnLongClickListener {showAlternatives(button,alternatives,dark);true} }
             }
+            if(index==2) deleteKey(row,dark)
             root.addView(row)
         }
-        val actions=LinearLayout(this)
-        if(!numeric) {
-            key(actions,when(state.shift) { Shift.OFF -> "⇧"; Shift.ONCE -> "⬆"; Shift.LOCKED -> "⇪" },getString(R.string.key_shift),dark) { state.shift(SystemClock.uptimeMillis()); render() }
-            key(actions,if(state.layer==Layer.LETTERS) "123" else "ABC",getString(R.string.key_symbols),dark) { emoji=false; state.layer=if(state.layer==Layer.LETTERS) Layer.NUMBERS else Layer.LETTERS; render() }
-            if(state.layer!=Layer.LETTERS) key(actions,"#+=",getString(R.string.more_symbols),dark) { state.layer=if(state.layer==Layer.SYMBOLS) Layer.NUMBERS else Layer.SYMBOLS; render() }
-            key(actions,"☺",getString(R.string.emoji),dark) { emoji=!emoji; render() }
-            if(!mediaMode) key(actions,getString(R.string.media),getString(R.string.media),dark) {mediaMode=true;searching=false;state.reset();render()}
+        val bottom=KeyboardRow()
+        if(numeric) {
+            key(bottom,"-","-",dark){commit("-")}
+            key(bottom,"0","0",dark){commit("0")}
+            key(bottom,pack.decimal,pack.decimal,dark){commit(pack.decimal)}
+        } else {
+            key(bottom,if(state.layer==Layer.LETTERS && !emoji) "?123" else "ABC",getString(R.string.key_symbols),dark,1.3f,true) {
+                emoji=false;state.layer=if(state.layer==Layer.LETTERS) Layer.NUMBERS else Layer.LETTERS;render()
+            }
+            key(bottom,"☺",getString(R.string.emoji),dark,0.9f,true){emoji=!emoji;state.layer=Layer.LETTERS;render()}
+            val variation=(currentInputEditorInfo?.inputType ?: 0) and InputType.TYPE_MASK_VARIATION
+            val punctuation=if(variation==InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS || variation==InputType.TYPE_TEXT_VARIATION_WEB_EMAIL_ADDRESS) "@" else if(variation==InputType.TYPE_TEXT_VARIATION_URI) "/" else ","
+            key(bottom,punctuation,punctuation,dark,0.9f){commit(punctuation)}
+            key(bottom,getString(R.string.key_space),getString(R.string.key_space),dark,4f){commit(" ");updateCaps()}
+            key(bottom,".",".",dark,0.9f){commit(".")}
         }
-        val delete=key(actions,"⌫",getString(R.string.key_delete),dark) { if(!repeatOccurred) delete(); repeatOccurred=false }
-        delete.setOnTouchListener { _,event ->
+        key(bottom,actionLabel(),actionLabel(),dark,1.4f,true){enter()}
+        root.addView(bottom)
+    }
+    private fun deleteKey(row:LinearLayout,dark:Boolean) {
+        val button=key(row,"⌫",getString(R.string.key_delete),dark,1.4f,true) {if(!repeatOccurred) delete();repeatOccurred=false}
+        button.setOnTouchListener { _,event ->
             when(event.actionMasked) {
-                MotionEvent.ACTION_DOWN -> { repeatOccurred=false; repeating=true; handler.postDelayed(repeater,400) }
+                MotionEvent.ACTION_DOWN -> {repeatOccurred=false;repeating=true;handler.postDelayed(repeater,400)}
                 MotionEvent.ACTION_UP,MotionEvent.ACTION_CANCEL -> cancelRepeat()
             }
             false
         }
-        root.addView(actions)
-        val bottom=LinearLayout(this)
-        key(bottom,"🌐",getString(R.string.switch_keyboard),dark) { getSystemService(InputMethodManager::class.java).showInputMethodPicker() }
-        if(!numeric) {
-            key(bottom,pack.name,getString(R.string.change_language),dark) { languageIndex=(languageIndex+1)%packs.size; scope.launch {preferences.language(pack.tag)}; state.reset(); render() }
-            val variation=(currentInputEditorInfo?.inputType ?: 0) and InputType.TYPE_MASK_VARIATION
-            val punctuation=if(variation==InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS || variation==InputType.TYPE_TEXT_VARIATION_WEB_EMAIL_ADDRESS) "@" else if(variation==InputType.TYPE_TEXT_VARIATION_URI) "/" else ","
-            key(bottom,punctuation,punctuation,dark) { commit(punctuation) }
-            key(bottom,getString(R.string.key_space),getString(R.string.key_space),dark,2f) { commit(" "); updateCaps(); render() }
-            key(bottom,".",".",dark) { commit(".") }
-        }
-        key(bottom,actionLabel(),actionLabel(),dark) { enter() }
-        root.addView(bottom)
     }
-    private fun key(row:LinearLayout,label:String,description:String,dark:Boolean,weight:Float=1f,action:()->Unit):Button {
+    private fun key(row:LinearLayout,label:String,description:String,dark:Boolean,weight:Float=1f,function:Boolean=false,action:()->Unit):Button {
         val button=Button(this).apply {
-            text=label; contentDescription=description; textSize=if(label.length>3) 12f else 19f
-            isAllCaps=false; minWidth=0; minimumWidth=0; setPadding(0,0,0,0)
+            text=label; contentDescription=description; textSize=if(label.length>3) 12f else 18f
+            isAllCaps=false; minWidth=0; minimumWidth=0; minHeight=0; minimumHeight=0; setPadding(0,0,0,0)
             setTextColor(getColor(if(dark) R.color.keyboard_text_dark else R.color.keyboard_text))
-            background=android.graphics.drawable.RippleDrawable(android.content.res.ColorStateList.valueOf(0x33426655),GradientDrawable().apply { setColor(getColor(if(dark) R.color.keyboard_key_dark else R.color.keyboard_key)); cornerRadius=dp(7).toFloat() },null)
+            background=android.graphics.drawable.RippleDrawable(android.content.res.ColorStateList.valueOf(0x22333333),GradientDrawable().apply {setColor(getColor(when {dark && function->R.color.keyboard_function_dark;dark->R.color.keyboard_key_dark;function->R.color.keyboard_function;else->R.color.keyboard_key}));cornerRadius=dp(5).toFloat()},null)
             setOnClickListener { if(haptics) performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP); action() }
         }
-        row.addView(button,LinearLayout.LayoutParams(0,dp(50),weight).apply { setMargins(dp(2),dp(3),dp(2),dp(3)) })
+        row.addView(button,LinearLayout.LayoutParams(0,dp(48),weight).apply {setMargins(dp(1),dp(2),dp(1),dp(2))})
         return button
+    }
+    /** Only gaps between visible keys are corrected; touches inside a key are never reassigned. */
+    private inner class KeyboardRow:LinearLayout(this@ReaxKeyService) {
+        private var gapTarget:View?=null
+        override fun dispatchTouchEvent(event:MotionEvent):Boolean {
+            if(event.actionMasked==MotionEvent.ACTION_DOWN) {
+                gapTarget=null
+                val hit=(0 until childCount).map(::getChildAt).firstOrNull {event.x>=it.left && event.x<it.right && event.y>=it.top && event.y<it.bottom}
+                if(hit==null) {
+                    val nearest=(0 until childCount).map(::getChildAt).minByOrNull {child->
+                        val dx=event.x-(child.left+child.right)/2f;val dy=event.y-(child.top+child.bottom)/2f;dx*dx+dy*dy
+                    }
+                    if(nearest!=null) {
+                        val dx=if(event.x<nearest.left) nearest.left-event.x else if(event.x>nearest.right) event.x-nearest.right else 0f
+                        val dy=if(event.y<nearest.top) nearest.top-event.y else if(event.y>nearest.bottom) event.y-nearest.bottom else 0f
+                        if(dx<=dp(8) && dy<=dp(8)) gapTarget=nearest
+                    }
+                }
+            }
+            val target=gapTarget ?: return super.dispatchTouchEvent(event)
+            val corrected=MotionEvent.obtain(event)
+            corrected.offsetLocation((target.width/2f)-event.x,(target.height/2f)-event.y)
+            val handled=target.dispatchTouchEvent(corrected);corrected.recycle()
+            if(event.actionMasked==MotionEvent.ACTION_UP || event.actionMasked==MotionEvent.ACTION_CANCEL) gapTarget=null
+            return handled
+        }
     }
     private fun showAlternatives(anchor:View,alternatives:List<String>,dark:Boolean) {
         val row=LinearLayout(this)

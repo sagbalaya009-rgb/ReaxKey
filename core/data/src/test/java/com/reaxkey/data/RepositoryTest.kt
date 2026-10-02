@@ -19,7 +19,7 @@ class RepositoryTest {
     @After fun close() { db.close() }
     @Test fun explicitReimportRestoresRemovalWithoutDiscardingFavorites()=runBlocking {
         repo.putSource(MediaSource("imports","IMPORTED","Imports"))
-        val id=repo.index(MediaItem(sourceId="imports",uri="content://test/a",name="a",mime="image/png",kind="IMAGE"),1)
+        val id=repo.index(MediaItem(sourceId="imports",uri="content://test/a",name="a",mime="image/png",kind="STICKER"),1)
         repo.favorite(id,true);repo.remove(id);repo.disconnect("imports")
         repo.restore(id)
         assertTrue(repo.item(id)!!.favorite)
@@ -28,7 +28,7 @@ class RepositoryTest {
     }
     @Test fun duplicateUriAcrossSourcesKeepsOneLogicalReactionAndUserMetadata()=runBlocking {
         repo.putSource(MediaSource("a","MEDIASTORE","Phone"));repo.putSource(MediaSource("b","MEDIASTORE","Pictures"))
-        val item=MediaItem(sourceId="a",uri="content://media/external/images/media/12",name="x",mime="image/png",kind="IMAGE")
+        val item=MediaItem(sourceId="a",uri="content://media/external/images/media/12",name="x",mime="image/png",kind="STICKER")
         val id=repo.index(item,1);repo.favorite(id,true)
         assertEquals(id,repo.index(item.copy(sourceId="b"),2))
         assertEquals(1,repo.observe(MediaQuery()).first().size)
@@ -39,7 +39,7 @@ class RepositoryTest {
     }
     @Test fun scanFinishingAfterDisconnectCannotRestoreSource()=runBlocking {
         repo.putSource(MediaSource("s","SAF_TREE","Folder"))
-        val item=MediaItem(sourceId="s",uri="content://test/a",name="a",mime="image/png",kind="IMAGE")
+        val item=MediaItem(sourceId="s",uri="content://test/a",name="a",mime="image/png",kind="STICKER")
         repo.disconnect("s")
         repo.index(item,2)
         assertTrue(repo.observe(MediaQuery()).first().isEmpty())
@@ -49,7 +49,7 @@ class RepositoryTest {
     }
     @Test fun importedSourceCountTracksDeduplicationAndRemoval()=runBlocking {
         repo.putSource(MediaSource("imports","IMPORTED","Imports"))
-        val item=MediaItem(sourceId="imports",uri="content://test/a",name="a",mime="image/png",kind="IMAGE")
+        val item=MediaItem(sourceId="imports",uri="content://test/a",name="a",mime="image/png",kind="STICKER")
         val id=repo.index(item,1);repo.index(item,2)
         assertEquals(1,repo.source("imports")!!.count)
         repo.remove(id)
@@ -71,10 +71,15 @@ class RepositoryTest {
     }
     @Test fun failedSourceIsHiddenAndRecoveryRestoresIt()=runBlocking {
         repo.putSource(MediaSource("s","SAF_TREE","Folder"))
-        val item=MediaItem(sourceId="s",uri="content://test/a",name="a",mime="image/png",kind="IMAGE")
+        val item=MediaItem(sourceId="s",uri="content://test/a",name="a",mime="image/png",kind="STICKER")
         repo.index(item,1); repo.finishScan("s",1,"REVOKED",0)
         assertTrue(repo.observe(MediaQuery()).first().isEmpty())
         repo.index(item,2); repo.finishScan("s",2,"OK",1)
         assertEquals(1,repo.observe(MediaQuery()).first().size)
+    }
+    @Test fun photoKindCannotReachStickerGrid()=runBlocking {
+        repo.putSource(MediaSource("s","SAF_TREE","Folder"))
+        repo.index(MediaItem(sourceId="s",uri="content://test/photo",name="photo.jpg",mime="image/jpeg",kind="IMAGE"),1)
+        assertTrue(repo.observe(MediaQuery()).first().isEmpty())
     }
 }

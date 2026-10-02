@@ -1,0 +1,17 @@
+<resources>
+    <string name="sticker_tab">Stickers</string>
+    <string name="import_stickers">Import stickers</string>
+    <string name="refresh_stickers">Refresh</string>
+    <string name="find_whatsapp_stickers">Find WhatsApp stickers</string>
+    <string name="whatsapp_stickers">WhatsApp Stickers</string>
+    <string name="business_stickers">WhatsApp Business Stickers</string>
+    <string name="add_stickers">Add stickers</string>
+    <string name="no_stickers_imported">No stickers imported</string>
+    <string name="select_sticker_folder">Select your WhatsApp Stickers folder</string>
+    <string name="sticker_access">Sticker access</string>
+    <string name="sticker_access_detail">Choose a sticker folder once, or allow Android to show shared sticker files. ReaxKey does not scan your photos.</string>
+    <string name="keyboard_settings">Keyboard</string>
+    <string name="privacy_settings">Privacy</string>
+    <string name="privacy_sticker_detail">Typing stays on your phone. ReaxKey does not record or upload typed text. Sticker indexing stays on this device.</string>
+    <string name="source_stickers_count">%1$s · %2$d stickers</string>
+</resources>
