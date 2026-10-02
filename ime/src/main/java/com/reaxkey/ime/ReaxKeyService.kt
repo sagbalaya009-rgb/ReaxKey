@@ -17,7 +17,7 @@ import java.util.Locale
 import com.reaxkey.data.Preferences
 import kotlinx.coroutines.*
 
-class ReaxKeyService : InputMethodService() {
+open class ReaxKeyService : InputMethodService() {
     private val scope=CoroutineScope(SupervisorJob()+Dispatchers.Main.immediate)
     private val preferences by lazy {Preferences(this)}
     private val mediaPanel by lazy {MediaPanel(this,scope){sensitive}}
@@ -84,7 +84,7 @@ class ReaxKeyService : InputMethodService() {
         val dark=theme=="DARK" || (theme=="SYSTEM" && resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES)
         root.setBackgroundColor(getColor(if(dark) R.color.keyboard_background_dark else R.color.keyboard_background))
         if(mediaMode) {
-            root.addView(mediaPanel.view(searching,{mediaMode=false;mediaPanel.hide();render()},{searching=!searching;render()}))
+            root.addView(mediaPanel.view(searching,dark,{mediaMode=false;mediaPanel.hide();render()},{searching=!searching;render()}))
             if(!searching) return
         }
         val rows=when {
@@ -98,7 +98,11 @@ class ReaxKeyService : InputMethodService() {
             val row=LinearLayout(this)
             keys.forEach { key ->
                 val displayed=if(state.shift != Shift.OFF && !numeric) key.uppercase(Locale.forLanguageTag(pack.tag)) else key
-                val button=key(row,displayed,displayed,dark) { commit(state.text(key,Locale.forLanguageTag(pack.tag))); updateCaps(); render() }
+                val button=key(row,displayed,displayed,dark) {
+                    val previousShift=state.shift
+                    commit(state.text(key,Locale.forLanguageTag(pack.tag))); updateCaps()
+                    if(previousShift!=state.shift) render()
+                }
                 pack.alternatives[key]?.let { alternatives -> button.setOnLongClickListener { showAlternatives(button,alternatives,dark); true } }
             }
             root.addView(row)

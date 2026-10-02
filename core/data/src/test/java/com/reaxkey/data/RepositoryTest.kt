@@ -17,6 +17,24 @@ class RepositoryTest {
     private lateinit var repo:LocalRepository
     @Before fun setup() { db=Room.inMemoryDatabaseBuilder(ApplicationProvider.getApplicationContext(),ReaxDatabase::class.java).allowMainThreadQueries().build(); repo=LocalRepository(db) }
     @After fun close() { db.close() }
+    @Test fun scanFinishingAfterDisconnectCannotRestoreSource()=runBlocking {
+        repo.putSource(MediaSource("s","SAF_TREE","Folder"))
+        val item=MediaItem(sourceId="s",uri="content://test/a",name="a",mime="image/png",kind="IMAGE")
+        repo.disconnect("s")
+        repo.index(item,2)
+        assertTrue(repo.observe(MediaQuery()).first().isEmpty())
+        repo.finishScan("s",2,"OK",1)
+        assertEquals("DISCONNECTED",repo.source("s")!!.health)
+        assertFalse(repo.item(repo.find("s",item.uri)!!.id)!!.available)
+    }
+    @Test fun importedSourceCountTracksDeduplicationAndRemoval()=runBlocking {
+        repo.putSource(MediaSource("imports","IMPORTED","Imports"))
+        val item=MediaItem(sourceId="imports",uri="content://test/a",name="a",mime="image/png",kind="IMAGE")
+        val id=repo.index(item,1);repo.index(item,2)
+        assertEquals(1,repo.source("imports")!!.count)
+        repo.remove(id)
+        assertEquals(0,repo.source("imports")!!.count)
+    }
     @Test fun rescanPreservesFavoriteAndRemoval()=runBlocking {
         repo.putSource(MediaSource("s","SAF_TREE","Folder"))
         val item=MediaItem(sourceId="s",uri="content://test/a",name="a.png",mime="image/png",kind="STICKER")

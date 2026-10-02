@@ -109,3 +109,18 @@ Before merging a feature:
 - `./gradlew assembleDebug`
 - instrumentation tests when affected
 - manual phone validation for IME/storage/rich-content changes
+
+## Windows and physical-device regression coverage (2026-10-02)
+
+Desktop suite: 35 tests, 33 pass and two Windows skips. AndroidX FileProvider's
+canonical path checks assume `/`; import integration tests run unchanged on Linux CI.
+The production provider roots are not widened to accommodate a host-OS test limitation.
+
+Device command: `adb shell am instrument -w com.reaxkey.keyboard.test/androidx.test.runner.AndroidJUnitRunner`.
+Three tests passed on TECNO KL5, Android 14. Optional `-e retainFixtures true` leaves clearly named
+QA sample imports for manual rich-content tests; default test runs delete their generated copies.
+These tests use native image decoders, restricted provider roots, real imports and outgoing reads.
+Actual cross-app grant delivery is additionally verified through the separate receiver app.
+
+Generated SQLite benchmark output is printed by LargeLibraryTest at 100, 1000 and 10000 rows.
+It does not measure real SAF scanning, animated-grid memory or phone frame time.

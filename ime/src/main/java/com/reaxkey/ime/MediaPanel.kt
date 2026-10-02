@@ -35,7 +35,7 @@ class MediaPanel(private val service:InputMethodService,private val scope:Corout
     fun hide() {queryJob?.cancel();popup?.dismiss();grid=null;label=null}
     fun append(value:String) {query=(query+value).take(200);offset=0;refresh()}
     fun delete() {if(query.isNotEmpty()) query=query.substring(0,query.offsetByCodePoints(query.length,-1));offset=0;refresh()}
-    fun view(search:Boolean,onBack:()->Unit,onSearch:()->Unit):View {
+    fun view(search:Boolean,dark:Boolean,onBack:()->Unit,onSearch:()->Unit):View {
         val column=LinearLayout(service).apply {orientation=LinearLayout.VERTICAL}
         val controls=LinearLayout(service)
         fun button(parent:LinearLayout,text:String,action:()->Unit) {parent.addView(Button(service).apply {this.text=text;isAllCaps=false;setOnClickListener {action()}},LinearLayout.LayoutParams(0,dp(48),1f))}
@@ -43,7 +43,7 @@ class MediaPanel(private val service:InputMethodService,private val scope:Corout
         button(controls,service.getString(R.string.action_search),onSearch)
         button(controls,service.getString(R.string.clear_search)) {query="";offset=0;refresh()}
         column.addView(controls)
-        label=TextView(service).apply {text=query.ifBlank {service.getString(R.string.media_search)};setPadding(dp(8),dp(4),dp(8),dp(4));setOnClickListener {onSearch()};contentDescription=service.getString(R.string.media_search)}
+        label=TextView(service).apply {setTextColor(service.getColor(if(dark) R.color.keyboard_text_dark else R.color.keyboard_text));text=query.ifBlank {service.getString(R.string.media_search)};setPadding(dp(8),dp(4),dp(8),dp(4));setOnClickListener {onSearch()};contentDescription=service.getString(R.string.media_search)}
         column.addView(label)
         val tabs=LinearLayout(service)
         listOf("All" to R.string.all,"Stickers" to R.string.stickers,"GIFs" to R.string.gifs,"Recent" to R.string.recent,"Favorites" to R.string.favorites).forEach { (key,title) ->button(tabs,service.getString(title)){filter=key;offset=0;refresh()} }
@@ -89,7 +89,7 @@ class MediaPanel(private val service:InputMethodService,private val scope:Corout
             try {
                 val uri=access.sendUri(item)
                 if(expectedSession!=session || service.currentInputConnection!==connection) return@launch
-                val accepted=InputConnectionCompat.commitContent(connection,editor,InputContentInfoCompat(uri,ClipDescription(item.name,arrayOf(item.mime)),null),InputConnectionCompat.INPUT_CONTENT_GRANT_READ_URI_PERMISSION,null)
+                val accepted=RichContentSender.commit(connection,editor,uri,item.mime,item.name)
                 if(accepted) {if(!privacy()) repo.recordUse(item.id)} else fallback(item)
             } catch(e:CancellationException){throw e} catch(_:Exception){Toast.makeText(service,R.string.missing_media,Toast.LENGTH_LONG).show()}
         }

@@ -71,7 +71,9 @@ class MediaAccess(private val context:Context,private val repository:MediaReposi
     private fun metadata(uri:Uri,source:String,name:String,size:Long,modified:Long,owned:Boolean):MediaItem? {
         if(uri.scheme!="content") return null
         val bounds=BitmapFactory.Options().apply { inJustDecodeBounds=true }
-        resolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it,null,bounds) } ?: return null
+        // A bounds-only decode deliberately returns no Bitmap; inspect Options instead.
+        val input=resolver.openInputStream(uri) ?: return null
+        input.use { BitmapFactory.decodeStream(it,null,bounds) }
         val mime=bounds.outMimeType ?: return null
         if(mime !in MediaRules.supported || bounds.outWidth<=0 || bounds.outHeight<=0) return null
         var animated=mime=="image/gif"

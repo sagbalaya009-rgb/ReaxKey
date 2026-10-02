@@ -1,32 +1,41 @@
 # Project State
 
-## Current checkpoint — integrated application, platform validation pending
+## Checkpoint — physical Android validation in progress
 
-- Branch: build/full-reaxkey
-- Last previously pushed checkpoint: 7c275ed (Room/search).
-- Current checkpoint SHA: `git log -1` after this file's commit.
-- Implemented: all 11 documented modules; companion Library/Collections/Sources/Settings; explicit imports/share receiver; SAF/MediaStore scanners; Room/FTS; favorites/collections/tags; DataStore; multilingual typing; internal media search; rich-content sender and explicit Share fallback; separate testbed.
-- Executed: `gradlew.bat test lint assembleDebug --max-workers=2` passed after integration (519 tasks).
-- Tests: 21 unit/Robolectric tests passed, including Room migration and repository/FTS tests. Further integration regression coverage is being added next.
-- APK: app/build/outputs/apk/debug/app-debug.apk.
-- Testbed APK: testbed/build/outputs/apk/debug/testbed-debug.apk.
-- Lint: zero errors; warnings remain (dependency updates, touch-click advisory, testbed icon/backup configuration, deprecated API/KTX suggestions). Review before release.
-- CI: GitHub run 36936083405 passed for 7c275ed and uploaded an APK. New integrated checkpoint must be verified remotely.
-- ADB: operational; no device connected when checked.
-- Physical/emulator/third-party compatibility: NOT TESTED. Product is NOT COMPLETE under docs/DEFINITION_OF_DONE.md.
+Branch: build/full-reaxkey. Draft PR: https://github.com/sagbalaya009-rgb/ReaxKey/pull/1
 
-## Next exact objective
+All 11 modules are implemented. Companion Library/Collections/Sources/Settings, imports,
+SAF/MediaStore scanning, Room/FTS, multilingual typing and rich-content delivery are wired.
+No Internet permission in either merged debug or release manifest.
 
-Add and run import/deletion and rich-content/IME regression tests, generated 100/1000/10000-item search measurements, finalize external-signing release/AAB configuration, audit merged permissions, review remaining lint, and verify CI on the latest checkpoint. Then request the owner's phone for physical Android validation; do not claim compatibility before observation.
+## Executed verification (2026-10-02)
 
-## Known limitations to resolve or verify
+- Latest debug gate: test lint assembleDebug :app:assembleDebugAndroidTest passed, 556 tasks.
+- 35 desktop tests: 33 passed, 2 explicitly skipped on Windows because AndroidX FileProvider
+  assumes Unix separators. Those import tests remain enabled in Linux CI.
+- Three instrumentation tests passed on TECNO KL5 / Android 14 (API 34): real PNG/JPEG/GIF/WebP
+  decoder imports, deduplication/outgoing reads, private-root refusal. QA sample media retained
+  intentionally for interactive receiver testing.
+- Found and fixed a real bounds-only bitmap decode bug that rejected valid imports.
+- On-device setup UI and keyboard appearance inspected. Typed "hi" through ReaxKey.
+- Actual keyboard-to-testbed PNG (320 bytes) and GIF (42 bytes) grants read successfully.
+- Dark media-panel contrast fixed; ordinary typing no longer recreates unchanged key views.
+- Source disconnect/late-scan race and imported-source counts have regression coverage.
+- Unsigned release AAB built successfully after import correction (902 tasks); subsequent
+  keyboard view changes need final release rebuild. No signing secret configured.
+- Prior pushed integrated commit 5a0968a passed GitHub CI run 36937581714. Current changes
+  need a new CI run, particularly the Linux-only FileProvider tests.
+- Generated desktop SQLite measurements: 100/1000/10000 items; 10k index 7586 ms,
+  search 27 ms, rescan 9672 ms. These are NOT phone media-scan or rendering benchmarks.
 
-- No emulator/physical app UI inspection yet; IME lifecycle, scrolling, field actions, SAF grants, animated rendering and temporary URI grants need platform QA.
-- Index removal uses tombstones so rescans cannot silently restore removed media.
-- Background scan failure marks the source unavailable; reconnect/rescan is exposed.
-- Theme/language/haptic preferences are wired to app and IME.
-- Large-library search has bounded SQL/FTS queries; measurements are still pending.
-- Imports are capped at 50 MB each; animated WebP detection reads its format header. No vision model.
-- Upload signing key/Play Console work remains external; no production publication authorized.
+## Next steps / incomplete gates
 
-The parent synced sources directory is read-only and untouched. A draft PR tracks the branch: https://github.com/sagbalaya009-rgb/ReaxKey/pull/1
+Complete testbed JPEG/WebP/fallback and internal-search checks, then SAF permission lifecycle,
+rotation/process recreation, theme/language checks and device performance. Record real target-app
+compatibility only after observed tests. No third-party messaging has been sent.
+Refresh release bundle and latest CI, update compatibility matrix, commit and push checkpoints.
+Physical coverage remains partial; do not call the product complete or production-ready.
+Play signing/account/listing/policy and real purchase/update validation remain owner/platform gates.
+
+Parent sources remain read-only and untouched. Current APK is app/build/outputs/apk/debug/app-debug.apk;
+receiver APK is testbed/build/outputs/apk/debug/testbed-debug.apk.

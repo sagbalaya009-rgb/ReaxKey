@@ -21,7 +21,7 @@ data class Membership(val collectionId:Long,val mediaId:Long,val added:Long=Syst
 @Fts4 @Entity(tableName="media_fts") data class SearchRow(@PrimaryKey @ColumnInfo(name="rowid") val id:Long,val text:String)
 
 @Dao interface MediaDao {
-    @RawQuery(observedEntities=[MediaRow::class,SearchRow::class,Membership::class]) fun observe(query:SupportSQLiteQuery):Flow<List<MediaRow>>
+    @RawQuery(observedEntities=[MediaRow::class,SearchRow::class,Membership::class,SourceRow::class]) fun observe(query:SupportSQLiteQuery):Flow<List<MediaRow>>
     @Query("SELECT * FROM source ORDER BY name") fun sources():Flow<List<SourceRow>>
     @Query("SELECT * FROM collection ORDER BY sortOrder,name") fun collections():Flow<List<CollectionRow>>
     @Query("SELECT * FROM source WHERE id=:id") suspend fun source(id:String):SourceRow?
@@ -41,6 +41,7 @@ data class Membership(val collectionId:Long,val mediaId:Long,val added:Long=Syst
     @Query("DELETE FROM membership WHERE collectionId=:collection AND mediaId=:media") suspend fun removeMembership(collection:Long,media:Long)
     @Query("SELECT name FROM collection JOIN membership ON collection.id=membership.collectionId WHERE mediaId=:id") suspend fun collectionNames(id:Long):List<String>
     @Query("SELECT COUNT(*) FROM media WHERE removed=0") suspend fun count():Int
+    @Query("SELECT COUNT(*) FROM media WHERE sourceId=:source AND removed=0 AND available=1") suspend fun sourceCount(source:String):Int
     @Query("SELECT health FROM source") suspend fun health():List<String>
 }
 

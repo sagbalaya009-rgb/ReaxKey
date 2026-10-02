@@ -20,7 +20,9 @@ class LocalRepository(private val db:ReaxDatabase):MediaRepository {
         val row=MediaRow(old?.id ?: 0,item.sourceId,item.uri,item.name,item.mime,old?.kind ?: item.kind,item.width,item.height,item.size,item.modified,item.animated,item.available,
             old?.label ?: item.label,old?.favorite ?: item.favorite,old?.usage ?: 0,old?.lastUsed ?: 0,item.owned,old?.removed ?: false,old?.tags ?: item.tags,old?.created ?: item.created,System.currentTimeMillis(),generation)
         val inserted=dao.upsert(row); val id=old?.id ?: inserted
-        refresh(id); id
+        refresh(id)
+        dao.source(item.sourceId)?.takeIf { it.type=="IMPORTED" }?.let { dao.source(it.copy(count=dao.sourceCount(it.id))) }
+        id
     }
     private suspend fun refresh(id:Long) {
         val row=dao.item(id) ?: return
@@ -29,6 +31,7 @@ class LocalRepository(private val db:ReaxDatabase):MediaRepository {
     }
     override suspend fun finishScan(id:String,generation:Long,health:String,count:Int)=db.withTransaction {
         val source=dao.source(id) ?: return@withTransaction
+        if(!source.enabled) {dao.unavailableSource(id);return@withTransaction}
         if(health=="OK") dao.stale(id,generation) else dao.unavailableSource(id)
         dao.source(source.copy(health=health,lastScan=System.currentTimeMillis(),lastSuccess=if(health=="OK") System.currentTimeMillis() else source.lastSuccess,count=count))
     }
@@ -37,7 +40,11 @@ class LocalRepository(private val db:ReaxDatabase):MediaRepository {
     override suspend fun edit(id:Long,label:String,tags:String,kind:String)=db.withTransaction {
         dao.item(id)?.let { dao.upsert(it.copy(label=label.take(200),tags=tags.take(2000),kind=kind)); refresh(id) }; Unit
     }
-    override suspend fun remove(id:Long)=dao.remove(id)
+    override suspend fun remove(id:Long)=db.withTransaction {
+        dao.remove(id)
+        dao.item(id)?.let { item -> dao.source(item.sourceId)?.let { dao.source(it.copy(count=dao.sourceCount(it.id))) } }
+        Unit
+    }
     override suspend fun recordUse(id:Long)=dao.use(id,System.currentTimeMillis())
     override suspend fun createCollection(name:String) { if(name.isNotBlank()) dao.collection(CollectionRow(name=name.trim().take(100))) }
     override suspend fun membership(collection:Long,media:Long,add:Boolean)=db.withTransaction {
@@ -48,7 +55,7 @@ class LocalRepository(private val db:ReaxDatabase):MediaRepository {
     override suspend fun diagnostics()="items=${dao.count()}\nsourceHealth=${dao.health().groupingBy { it }.eachCount()}\n"
     companion object {
         fun sql(q:MediaQuery):SimpleSQLiteQuery {
-            val where=mutableListOf("m.available=1","m.removed=0"); val args=mutableListOf<Any>()
+            val where=mutableListOf("m.available=1","m.removed=0","m.sourceId IN (SELECT id FROM source WHERE enabled=1)"); val args=mutableListOf<Any>()
             val normalized=Lexical.normalize(q.text)
             if(normalized.isNotEmpty()) { where.add("m.id IN (SELECT rowid FROM media_fts WHERE media_fts MATCH ?)"); args.add(Lexical.match(q.text)) }
             when(q.filter) {

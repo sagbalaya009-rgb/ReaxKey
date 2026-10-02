@@ -6,14 +6,32 @@ android {
         applicationId = "com.reaxkey.keyboard"
         minSdk = 26
         targetSdk = 37
-        versionCode = 1
-        versionName = "0.1.0-dev"
+        versionCode = providers.gradleProperty("VERSION_CODE").orElse("1").get().toInt()
+        versionName = providers.gradleProperty("VERSION_NAME").orElse("0.1.0-dev").get()
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     buildFeatures { compose = true }
+    testOptions { unitTests.isIncludeAndroidResources = true }
+    val uploadKey=providers.environmentVariable("REAXKEY_KEYSTORE").orNull
+    if(uploadKey!=null) signingConfigs.create("upload") {
+        storeFile=file(uploadKey)
+        storePassword=providers.environmentVariable("REAXKEY_STORE_PASSWORD").get()
+        keyAlias=providers.environmentVariable("REAXKEY_KEY_ALIAS").get()
+        keyPassword=providers.environmentVariable("REAXKEY_KEY_PASSWORD").get()
+    }
+    buildTypes.getByName("release") {
+        isMinifyEnabled=true
+        proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
+        if(uploadKey!=null) signingConfig=signingConfigs.getByName("upload")
+    }
     compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
 }
 dependencies {
+    androidTestImplementation("androidx.test:runner:1.7.0")
+    androidTestImplementation("androidx.test.ext:junit:1.3.0")
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.robolectric:robolectric:4.17")
+    testImplementation("androidx.test:core:1.7.0")
     implementation(project(":core:data"))
     implementation(project(":core:media"))
     implementation(project(":feature:library"))
