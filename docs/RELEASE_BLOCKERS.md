@@ -1,4 +1,4 @@
-# 1.0.0 release gate register — 2026-10-02
+# 1.0.0 release gate register — 2026-10-03
 
 The source tree is a release candidate workstream, not an approved Play submission. Severity describes the effect on shipment; open gates are not waived by a passing build.
 
@@ -6,7 +6,7 @@ The source tree is a release candidate workstream, not an approved Play submissi
 |---|---|---|
 | BLOCKER | Signed upload bundle and Play App Signing | Local bundle is unsigned. Owner must create and safeguard an upload key outside Git, then sign and verify the AAB before upload. |
 | BLOCKER | Play photo/video-permission eligibility | The app declares `READ_MEDIA_IMAGES` for optional automatic shared-sticker discovery. Google's review may require a declaration and may reject broad access if SAF/picker access is judged sufficient. Resolve in Play Console; if rejected, revise the permission and source UX before submission. Do not assert approval. |
-| HIGH | Final physical regression on exact release build | Device 1.0.0 debug installation, 4/4 instrumentation tests, populated grid and process restart passed. Owner reports Telegram/Snapchat working, but both remain untested by the agent on this exact build. Recheck typing, secure fields, themes, both apps and reboot before tagging. |
+| HIGH | Complete physical regression on exact release build | Device 1.0.0 debug installation, 4/4 instrumentation tests, populated grid and process restart passed. Owner retested Telegram and Snapchat on this build and reported both working. Secure fields, themes, full typing controls and reboot remain to be checked before tagging. |
 | HIGH | Play track acquisition/update test | Requires signed bundle, Play Console and test track. Confirm paid acquisition, install and upgrade preserve grants/data before production. |
 | NORMAL | Broader device/API coverage | Physical QA is on Android 14; API 36/37 behavior, font scaling, TalkBack, dark/light contrast and reboot need additional devices or emulator. |
 | NON-BLOCKING FUTURE | Unsupported messaging apps | WhatsApp sending and all apps not in the matrix remain unverified; no universal claim. |
