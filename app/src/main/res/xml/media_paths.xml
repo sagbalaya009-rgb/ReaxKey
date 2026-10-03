@@ -1,0 +1,4 @@
+<paths>
+    <files-path name="imports" path="imports/"/>
+    <cache-path name="outgoing" path="outgoing/"/>
+</paths>

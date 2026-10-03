@@ -1,0 +1,61 @@
+name: iOS
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, 'build/**']
+    paths:
+      - 'ios/**'
+      - '.github/workflows/ios-ci.yml'
+  pull_request:
+    paths:
+      - 'ios/**'
+      - '.github/workflows/ios-ci.yml'
+permissions:
+  contents: read
+jobs:
+  simulator-build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: brew install xcodegen
+      - name: Generate Xcode project
+        run: xcodegen generate
+        working-directory: ios
+      - name: Build app and keyboard for iOS Simulator
+        run: |
+          xcodebuild -project ios/ReaxKey.xcodeproj -scheme ReaxKey \
+            -configuration Debug -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath ios/build CODE_SIGNING_ALLOWED=NO build
+      - name: Launch in iPhone Simulator
+        run: |
+          DEVICE_ID=$(xcrun simctl list devices available -j | python3 -c 'import json,sys; devices=json.load(sys.stdin)["devices"]; print(next((d["udid"] for group in devices.values() for d in group if d["name"].startswith("iPhone")), ""))')
+          test -n "$DEVICE_ID"
+          xcrun simctl boot "$DEVICE_ID"
+          xcrun simctl bootstatus "$DEVICE_ID" -b
+          xcrun simctl install "$DEVICE_ID" ios/build/Build/Products/Debug-iphonesimulator/ReaxKey.app
+          xcrun simctl launch "$DEVICE_ID" com.reaxkey.ios
+          sleep 2
+          xcrun simctl io "$DEVICE_ID" screenshot ios/simulator-smoke.png
+      - name: Package editable iOS project
+        if: always()
+        run: zip -r -q reaxkey-ios-project.zip ios -x 'ios/build/*'
+      - name: Package simulator app
+        run: |
+          ditto -c -k --sequesterRsrc --keepParent \
+            ios/build/Build/Products/Debug-iphonesimulator/ReaxKey.app \
+            reaxkey-ios-simulator-app.zip
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reaxkey-ios-project-source
+          path: reaxkey-ios-project.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: reaxkey-ios-simulator-app
+          path: reaxkey-ios-simulator-app.zip
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reaxkey-ios-simulator-smoke
+          path: ios/simulator-smoke.png

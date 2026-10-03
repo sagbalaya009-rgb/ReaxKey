@@ -68,6 +68,8 @@ For a release APK/AAB:
 - use Android Studio signing or CI secrets,
 - never paste private key material into AI chat or repository docs.
 
+The current default is `versionName=1.0.0`, `versionCode=1`. Each bundle uploaded to Play needs a strictly higher, never reused version code. Set `VERSION_CODE` and `VERSION_NAME` as Gradle properties for later releases; record the uploaded code in the release log. The unsigned `bundleRelease` output is a build verification artifact, not a Play-uploadable bundle. Enrol in Play App Signing and create a dedicated upload key outside this repository with a strong password chosen by the owner. Back up the key and passwords securely. The build reads `REAXKEY_KEYSTORE`, `REAXKEY_STORE_PASSWORD`, `REAXKEY_KEY_ALIAS` and `REAXKEY_KEY_PASSWORD` from the environment. Verify the signed AAB certificate fingerprint before upload and preserve that fingerprint for updates. Never place signing values in commands, CI logs, docs or chat. CI intentionally publishes only an explicitly named unsigned release bundle.
+
 ## 7. Versioning
 
 Use monotonically increasing Android `versionCode` and readable `versionName` (e.g. semantic versioning once releases begin).

@@ -1,50 +1,43 @@
-# Project State
+# Project state — 2026-10-03
 
-## Current status
+Branch: `build/full-reaxkey`. Existing draft PR: https://github.com/sagbalaya009-rgb/ReaxKey/pull/1. Parent ChatGPT-project `sources/` is read-only and untouched.
 
-**Stage: Documentation / pre-implementation architecture complete**
+## Current product
 
-No Android implementation should be assumed to exist yet.
+ReaxKey opens on Stickers with a Settings tab. It has a conventional QWERTY keyboard, symbol pages and a Media panel. The library is sticker-focused: broad photos, screenshots and Downloads are excluded. It supports Android-backed discovery where media is accessible, SAF folder grants, individual import and share-to-ReaxKey. Room stores the local index, favorites, labels, collections and use counts. The IME checks receiving editor MIME support and sends a temporary content-URI grant, with an explicit Share fallback. The app has no account, ads, billing, backend or Internet permission.
 
-## Product identity
+## Physical observations
 
-Product name: **ReaxKey**
+On TECNO KL5 / Android 14 (API 34), the owner approved the WhatsApp Stickers folder in Android's picker. That directory contained 10,834 WebP files via ADB; ReaxKey indexed 10,675 stickers and displayed them in the app and IME. Android's automatic MediaStore view did not expose that folder despite image permission. A scan left queued after Android stopped it; explicit Refresh was repaired to replace the stale unique work, and the source subsequently reached OK at 10,675. The separate receiver read an actual WebP sticker with a temporary URI grant (18,014 bytes); normal typing and ABC return were observed. Earlier receiver tests covered PNG, JPEG, GIF and WebP fixtures and unsupported MIME fallback. After the 1.0.0 debug build was installed, the owner physically retested Telegram and Snapchat and reported both working (2026-10-03). Exact third-party app versions and media formats remain unknown. WhatsApp sending and other apps are NOT TESTED.
 
-Repository: **ReaxKey** (private during development)
+## Release pass
 
-Development package/application ID: `com.reaxkey.keyboard`
+Default app identity is `com.reaxkey.keyboard`; min/compile/target SDK are 26/37/37. Version is 1.0.0/code 1. Google's 2026 phone/tablet minimum for new submissions is target API 36. The release manifest has optional image permissions and WorkManager permissions, but no Internet, contacts, camera, mic, location or all-files permission. Backup and device transfer are disabled. Release bundle signing is configured through external environment variables; no upload key is present, so the generated AAB is **unsigned**.
 
-Keep visible product strings centralized even though the product name is selected. Package identity must be reviewed before the first Play upload because it becomes a long-lived release identifier.
+Executed locally on this working tree: `test lint assembleDebug :app:assembleDebugAndroidTest :app:bundleRelease` passed (861 tasks; log `build/release-final-gate.log`). Lint completed with seven non-fatal warnings: newer Gradle/dependency versions, `dataExtractionRules` API scope, and optional resource shrinking. The API-scope warning is acceptable because `allowBackup=false` disables backup on older versions; dependency upgrades and resource shrinking are deferred to avoid unmeasured changes to verified behavior in this pass. Generated release manifest confirms version 1.0.0/code 1 and target 37. `jarsigner -verify` reports the AAB unsigned. Debug APK and unsigned AAB exist under `app/build/outputs/`.
 
-## Confirmed decisions
+The phone reappeared over ADB after reconnection. The 1.0.0 debug APK installed with data preserved. The first instrumentation run exposed a stale test expecting ordinary JPEG-photo import, which the sticker-only product intentionally rejects. The test was corrected without changing production media code; `:app:assembleDebugAndroidTest` passed and the installed suite then passed **4/4** tests, including real decoder/import, JPEG rejection, duplicate/outgoing URI and provider boundary checks. ADB confirmed installed version 1.0.0/code 1 and the ReaxKey IME remained selected. UI hierarchy checks confirmed a populated sticker grid, no empty state, and grid return after force-stop/relaunch. The owner's Telegram/Snapchat success report applies to this installed build; it does not verify exact third-party versions/formats, reboot persistence or a Play-delivered update.
 
-- Android first.
-- Native Kotlin.
-- Companion app + system IME in one installed Android application.
-- Light and dark mode only; no theme marketplace.
-- Multiple language layouts supported through language packs.
-- Core function: user-owned stickers/GIFs/images available through the keyboard.
-- Local-first; no backend/account required.
-- Vision model postponed. Architecture must expose a future semantic tag/embedding provider seam.
-- Users are guided through Android settings to enable/select the keyboard during onboarding.
-- Android security model is respected; no private-directory bypassing.
-- Rich content uses supported content-URI / Commit Content mechanisms.
-- Commercial model: one-time paid Google Play app.
-- No subscription, no ads, no required account, and no artificial feature tiering.
-- No Google Play Billing integration is required for the base paid-app model unless in-app purchases are deliberately added later.
+CI separates the debug artifacts from the explicitly unsigned bundle. Play listing copy, privacy policy source/HTML, Data Safety draft, release notes, asset plan, signing/version guidance, publication checklist and a release gate register are under `docs/`. These are prepared drafts; the owner must supply publisher/support identity, host the privacy policy, capture final screenshots and complete Play Console declarations.
 
-## Next implementation action
+## Open gates
 
-Follow `work/CHATGPT_WORK_MASTER_PROMPT.md` from the repository root. The coding agent must also read `docs/COMMERCIAL_DISTRIBUTION.md` before release-related work.
+See `docs/RELEASE_BLOCKERS.md`. In particular: secure upload key and signed AAB; Google Play review of optional `READ_MEDIA_IMAGES`; wider IME regression, Play-track acquisition/update and broader API/accessibility checks. No `v1.0.0-rc1` tag or production-ready claim while these remain open.
 
-## Status update format
+## iOS workstream — 2026-10-03
 
-When an agent completes a stage, replace this section with:
+`ios/` now contains a native SwiftUI companion app, a custom keyboard extension, a shared local sticker library and an XcodeGen project specification. The iOS library imports user-selected PNG/GIF/WebP stickers, deduplicates and stores them locally, and exposes search, favorites, collections, recents, labels and sharing. The keyboard provides basic typing without Full Access; with explicit Full Access it can copy a selected sticker so the user may paste where the destination allows. Apple does not expose Android's direct rich-content commit API to custom keyboards, so iOS Telegram/Snapchat parity is **unverified** and should not be claimed.
 
-- Stage completed
-- Commit SHA
-- Build result
-- Tests run and result
-- Physical device checks performed
-- Known limitations
-- Next stage
+The owner has neither a Mac nor an Apple Developer account yet. GitHub iOS run [37111430874](https://github.com/sagbalaya009-rgb/ReaxKey/actions/runs/37111430874) passed project generation, an unsigned simulator build of the app and keyboard, simulator installation and app launch. Its [source project ZIP](https://github.com/sagbalaya009-rgb/ReaxKey/actions/runs/37111430874/artifacts/11269578618) and [simulator screenshot](https://github.com/sagbalaya009-rgb/ReaxKey/actions/runs/37111430874/artifacts/11270077727) are private GitHub artifacts. This is a launch smoke check, not iPhone or third-party messaging validation.
+
+GitHub Android run [37111430876](https://github.com/sagbalaya009-rgb/ReaxKey/actions/runs/37111430876) passed and uploaded the [1.0.0 debug APK](https://github.com/sagbalaya009-rgb/ReaxKey/actions/runs/37111430876/artifacts/11269309314). The connected TECNO KL5 reported installed version 1.0.0/code 1 on 2026-10-03; it then disconnected before the installed APK could be read back completely, so byte-for-byte identity with the CI download was not verified. The repository is private and artifact downloads require access. A physical-iPhone IPA is not available without Apple signing/provisioning and real-device validation. See `ios/README.md`; never present the source ZIP or simulator app as an installable iPhone file.
+
+## Android typing upgrade and connected-phone checks — 2026-10-03
+
+Baseline checkpoint: `97d5c63a123664952ac457bafeaebbdf105e1467` with a clean worktree and passing `:app:testDebugUnitTest`. Files audited: `ime/ReaxKeyService.kt` owns IME lifecycle, View rows, space key, language switching and `InputConnection`; `ime/MediaPanel.kt` and `ime/RichContentSender.kt` own the protected media surface and insertion; `core/data/Preferences.kt` and `feature/settings/SettingsScreen.kt` own settings; `core/model/TypingState.kt` owns shift/layers. Media discovery/import modules and permissions remain unchanged.
+
+The typing changes add a unified neutral control bar, three English suggestions, limited local vocabulary learning, conservative autocorrect and immediate Backspace undo, a two-axis hold-space cursor controller with circular feedback, and Typing settings. This is an additive change in `:ime`; no new module or sticker-pipeline change. The new debug APK is at `app/build/outputs/apk/debug/app-debug.apk` (SHA-256 `7ebe4e78dc33f301827868fabf70ac998e411f3d217b74c5baf4f3a2e2e5ddd7`). Local `:app:testDebugUnitTest :app:lintDebug :app:assembleDebug` passed with 31 unit tests, zero failures and two existing Windows skips. `:app:assembleDebugAndroidTest` also built. Lint reported the same seven nonfatal version/backup/shrinking warnings as the prior release pass.
+
+The connected TECNO KL5 (Android 14) received that APK with `adb install -r -t`; app data and the existing sticker library were retained. ReaxKey remained available as the selected IME. In a separate local receiver, `teh` + Space became `the `, immediate Backspace restored `teh`, and tapping the suggestion replaced the word once. A hold-space drag moved the cursor left without inserting a space. A development-only multiline receiver field established up, down and diagonal movement across a newline through typed markers. Media opened with the existing populated sticker grid, and the receiver read one WebP sticker through a granted URI (`image/webp`, 4,822 bytes). The installed instrumentation suite passed 4/4 tests. The owner then tested Telegram and Snapchat stickers with this updated APK and reported that both work. Their exact app versions and sticker formats remain unknown. WhatsApp and other apps remain **NOT TESTED** for sending; landscape, wrapping and specialized editor fields remain to be checked.
+
+GitHub Actions [Android run 37138745271](https://github.com/sagbalaya009-rgb/ReaxKey/actions/runs/37138745271) passed the repository-wide test, lint, debug APK, Android-test APK and release-bundle workflow on head `95b99008fd50700d081bc3d1409b962fe2e492fe`. Its [new Android APK artifact](https://github.com/sagbalaya009-rgb/ReaxKey/actions/runs/37138745271/artifacts/11279239050) is a private development download. GitHub's separate [iOS simulator run](https://github.com/sagbalaya009-rgb/ReaxKey/actions/runs/37138745279) also passed; the iOS sources did not change in this typing upgrade. Neither CI run establishes Android phone or iPhone third-party app behavior.

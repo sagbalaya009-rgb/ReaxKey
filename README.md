@@ -4,15 +4,15 @@
 
 ## What this project is
 
-A privacy-first Android keyboard that lets a user type normally and access their own stickers, GIFs, images, and reaction media from one keyboard across compatible apps.
+A privacy-first Android keyboard for normal typing and quick access to the user's own stickers in compatible text fields.
 
 The application consists of:
 
 - a native Android IME (`InputMethodService`),
-- a companion library/management app,
-- local media discovery and indexing,
+- a two-tab Stickers/Settings companion app,
+- local sticker discovery and indexing,
 - rich-content insertion into compatible target apps,
-- local search, favorites, recents, collections, and source management,
+- local sticker search and source management,
 - multilingual keyboard layouts,
 - light and dark themes,
 - no required backend and no required account,

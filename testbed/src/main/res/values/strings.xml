@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">ReaxKey Testbed</string>
+    <string name="title">Rich-content receiver</string>
+    <string name="help">Choose a field, open ReaxKey, and send media. The status confirms MIME acceptance and whether its granted URI can actually be read.</string>
+    <string name="png_jpeg">PNG / JPEG</string><string name="gif">GIF</string><string name="webp">WebP</string><string name="all">All image types</string><string name="none">No rich content</string>
+    <string name="received">Received %1$s · %2$d bytes</string><string name="rejected">Rejected or unreadable URI</string><string name="waiting">Waiting for media</string>
+    <string name="multiline_cursor">Multiline cursor test</string>
+</resources>

@@ -83,3 +83,11 @@ Provide a visible globe/language/keyboard switch action that invokes the appropr
 ## 9. Haptics and sound
 
 Follow system/user settings. Add toggles only if reliable; defaults should respect Android configuration.
+
+## 10. Typing upgrade (2026-10-03)
+
+The existing View-based `ReaxKeyService` and `MediaPanel`/`RichContentSender` remain in place. The typing surface adds a single rounded globe/language/Media control bar and a three-candidate strip. English suggestions use a small on-device frequency list, prefix matching, a few preceding-word weights and words deliberately repeated three times in a session. Only trusted words are persisted in local app preferences; Settings > Typing can disable learning or clear them. Other languages currently retain reliable manual typing without predictions.
+
+Autocorrect runs only at space or punctuation boundaries and only for a curated list of high-confidence English typos. Immediate Backspace restores the original word; unrelated typing clears that undo. Password/PIN/OTP-like editors, editors requesting no personalized learning, numeric fields, URL, email and filter/code-like fields do not use text-derived suggestions or correction. No typed sentence history is saved or transmitted.
+
+A space tap remains a space. A 330 ms hold enters cursor mode and shows an anchored circular bubble; movement accumulates in separate axes with approximately 8–11 dp per step and mild speed adjustment. Android editor DPAD movement handles visual lines when supported. If vertical movement does not advance and the editor exposes extracted text, a newline-aware logical-line fallback preserves approximate column. These semantics cannot infer arbitrary wrapped-line geometry in every host app. The IME defers selection-triggered redraw while a space gesture is active.

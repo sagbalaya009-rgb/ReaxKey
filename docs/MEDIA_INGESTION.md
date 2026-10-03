@@ -96,3 +96,28 @@ If a source permission is revoked:
 - hide unavailable media from default keyboard results,
 - give the user a reconnect action,
 - never crash on stale URIs.
+
+## Automatic reaction discovery contract — 2026-10-02 (supersedes manual-source-first UX)
+
+The primary add/onboarding action is Find my reactions, never an immediate folder picker.
+SourceDiscoveryEngine uses pluggable recognizers over supported metadata: authorized MediaStore
+rows, persisted document-tree grants, and owned imports. Named-app attribution requires path-segment
+or provider evidence, not installed-app checks or filenames. Results distinguish AVAILABLE,
+AVAILABLE_REQUIRES_USER_GRANT, PARTIALLY_AVAILABLE, NOT_FOUND, PRIVATE_OR_INACCESSIBLE,
+PERMISSION_REQUIRED and ERROR, with explicit confidence and observed counts.
+
+Discovery describes candidates; shared MediaAccess ingestion scans them through WorkManager;
+Room flows update app/IME search without restart. Shared-media buckets are mutually exclusive.
+No raw filesystem crawling, production shell/ADB, protected app directories, contacts, chat or
+notification access. Only public Android APIs. Existing access is checked before permission requests.
+Partial grants remain partial. Manual folder selection is an advanced fallback; any initial picker
+URI comes from actual provider evidence or a previous grant, never a guessed guaranteed app path.
+The user must approve Android's directory grant. Picker positioning is a hint, never a promise.
+
+Sources UI separates Found on your phone and Added by you. Add reactions orders automatic discovery,
+individual import, personal-folder connection, then share help. Empty/lost states use human wording.
+Shared imports preview once and accept bulk media together. App visuals use #0B0D10 dark background,
+blue/violet accents and 20dp cards. Automated recognizer tests and physical discovery/grant lifecycle
+checks are mandatory; record observed results without claiming universal app compatibility.
+
+See docs/SOURCE_DISCOVERY.md for implementation and verification details.

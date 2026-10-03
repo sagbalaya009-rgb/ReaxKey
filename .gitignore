@@ -11,3 +11,13 @@
 *.keystore
 keystore.properties
 secrets.properties
+
+**/build/
+.kotlin/
+.android/
+*.log
+ios/build/
+ios/*.xcodeproj/
+ios/*.xcworkspace/
+ios/*.xcuserstate
+ios/DerivedData/
