@@ -6,12 +6,20 @@ import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.map
 
 private val Context.reaxPreferences by preferencesDataStore("preferences")
-data class UserPreferences(val theme:String="SYSTEM",val language:String="en",val haptics:Boolean=true)
+data class UserPreferences(val theme:String="SYSTEM",val language:String="en",val haptics:Boolean=true,
+    val suggestions:Boolean=true,val autocorrect:Boolean=true,val learnWords:Boolean=true,val spaceTrackpad:Boolean=true)
 class Preferences(context:Context) {
     private val store=context.applicationContext.reaxPreferences
-    val flow=store.data.map { UserPreferences(it[THEME] ?: "SYSTEM",it[LANGUAGE] ?: "en",it[HAPTICS] ?: true) }
+    val flow=store.data.map { UserPreferences(it[THEME] ?: "SYSTEM",it[LANGUAGE] ?: "en",it[HAPTICS] ?: true,
+        it[SUGGESTIONS] ?: true,it[AUTOCORRECT] ?: true,it[LEARN_WORDS] ?: true,it[SPACE_TRACKPAD] ?: true) }
     suspend fun theme(value:String) { store.edit { it[THEME]=value } }
     suspend fun language(value:String) { store.edit { it[LANGUAGE]=value } }
     suspend fun haptics(value:Boolean) { store.edit { it[HAPTICS]=value } }
-    companion object { private val THEME=stringPreferencesKey("theme"); private val LANGUAGE=stringPreferencesKey("language"); private val HAPTICS=booleanPreferencesKey("haptics") }
+    suspend fun suggestions(value:Boolean) { store.edit { it[SUGGESTIONS]=value } }
+    suspend fun autocorrect(value:Boolean) { store.edit { it[AUTOCORRECT]=value } }
+    suspend fun learnWords(value:Boolean) { store.edit { it[LEARN_WORDS]=value } }
+    suspend fun spaceTrackpad(value:Boolean) { store.edit { it[SPACE_TRACKPAD]=value } }
+    companion object { private val THEME=stringPreferencesKey("theme"); private val LANGUAGE=stringPreferencesKey("language"); private val HAPTICS=booleanPreferencesKey("haptics");
+        private val SUGGESTIONS=booleanPreferencesKey("suggestions"); private val AUTOCORRECT=booleanPreferencesKey("autocorrect");
+        private val LEARN_WORDS=booleanPreferencesKey("learn_words"); private val SPACE_TRACKPAD=booleanPreferencesKey("space_trackpad") }
 }

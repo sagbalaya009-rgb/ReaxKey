@@ -12,7 +12,7 @@
     <string name="sticker_access_detail">Choose a sticker folder once, or allow Android to show shared sticker files. ReaxKey does not scan your photos.</string>
     <string name="keyboard_settings">Keyboard</string>
     <string name="privacy_settings">Privacy</string>
-    <string name="privacy_sticker_detail">Typing stays on your phone. ReaxKey does not record or upload typed text. Sticker indexing stays on this device.</string>
+    <string name="privacy_sticker_detail">Typing stays on your phone. ReaxKey never uploads typed text. If learning is on, repeatedly used words may be saved locally; clear them in Typing settings. Sticker indexing stays on this device.</string>
     <string name="source_stickers_count">%1$s · %2$d stickers</string>
     <string name="sticker_indexing">Indexing stickers…</string>
     <string name="source_sticker_indexing">%1$s · Indexing stickers…</string>

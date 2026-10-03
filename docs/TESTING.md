@@ -149,3 +149,9 @@ blue/violet accents and 20dp cards. Automated recognizer tests and physical disc
 checks are mandatory; record observed results without claiming universal app compatibility.
 
 See docs/SOURCE_DISCOVERY.md for implementation and verification details.
+
+## Typing upgrade verification — 2026-10-03
+
+Robolectric `KeyboardTest` covers basic typing and media-panel return, boundary correction and immediate undo, suggestion prefix replacement and punctuation preservation, password/no-suggestions editors, tap versus hold, diagonal cursor movement/cancel and a missing `InputConnection`. The offline model test checks high-confidence typo cases, capitalization, unknown-word noncorrection, three-use learning and clearing pending learning. The app unit suite, debug APK, Android test APK and lint run locally; see `PROJECT_STATE.md` for the recorded result.
+
+The upgraded APK still needs hands-on checks on a connected Android phone. Use a multiline note to test horizontal/vertical/diagonal hold-space movement and wrapped lines; type in ordinary, search, password, email and URL fields; inspect portrait/landscape and dark/light appearance; check Media open/return and existing sticker imports. Re-test actual sticker sending in Telegram and Snapchat. Record exact app versions, Android version, and observed outcomes. WhatsApp and other apps must remain unverified until actually tested. Automated tests do not establish touch feel or third-party compatibility.
