@@ -20,13 +20,20 @@ class KeyboardHarness:ReaxKeyService() {
     val editor=EditorInfo().apply {inputType=InputType.TYPE_CLASS_TEXT}
     val buffer=SpannableStringBuilder()
     var connected=true
+    var nativeCursorSupported=true
     var capsQueries=0
     var action=-1
     private val connection=object:BaseInputConnection(View(ApplicationProvider.getApplicationContext()),true) {
         override fun getEditable():Editable=buffer
         override fun getCursorCapsMode(reqModes:Int):Int {capsQueries++;return 0}
         override fun performEditorAction(actionCode:Int):Boolean {action=actionCode;return true}
+        override fun getExtractedText(request:ExtractedTextRequest?,flags:Int):ExtractedText = ExtractedText().apply {
+            text=buffer.toString();startOffset=0
+            selectionStart=Selection.getSelectionStart(buffer).coerceAtLeast(0)
+            selectionEnd=Selection.getSelectionEnd(buffer).coerceAtLeast(0)
+        }
         override fun sendKeyEvent(event:KeyEvent):Boolean {
+            if(!nativeCursorSupported) return false
             if(event.action!=KeyEvent.ACTION_DOWN) return true
             val position=Selection.getSelectionStart(buffer).coerceAtLeast(0)
             val target=when(event.keyCode) {
@@ -210,6 +217,30 @@ class KeyboardTest {
             touch(space,MotionEvent.ACTION_MOVE,40f,15f)
             assertEquals("Space",space.text)
             touch(space,MotionEvent.ACTION_UP,40f,15f)
+        } finally {controller.destroy()}
+    }
+    @Test fun logicalLineFallbackAndUnicodeHorizontalFallback() {
+        val controller=Robolectric.buildService(KeyboardHarness::class.java).create();val service=controller.get()
+        try {
+            service.nativeCursorSupported=false
+            service.onStartInput(service.editor,false);val view=service.onCreateInputView()
+            view.measure(View.MeasureSpec.makeMeasureSpec(1080,View.MeasureSpec.EXACTLY),View.MeasureSpec.makeMeasureSpec(900,View.MeasureSpec.AT_MOST))
+            view.layout(0,0,1080,view.measuredHeight)
+            service.buffer.append("abc\ndef");Selection.setSelection(service.buffer,service.buffer.length)
+            val space=buttons(view).first {it.text=="Space"}
+            touch(space,MotionEvent.ACTION_DOWN,80f,30f)
+            Shadows.shadowOf(android.os.Looper.getMainLooper()).idleFor(Duration.ofMillis(350))
+            touch(space,MotionEvent.ACTION_MOVE,80f,-30f)
+            assertEquals(3,Selection.getSelectionStart(service.buffer))
+            touch(space,MotionEvent.ACTION_MOVE,80f,30f)
+            assertEquals(7,Selection.getSelectionStart(service.buffer))
+            touch(space,MotionEvent.ACTION_UP,80f,30f)
+            service.buffer.clear();service.buffer.append("A😀B");Selection.setSelection(service.buffer,3)
+            touch(space,MotionEvent.ACTION_DOWN,80f,30f)
+            Shadows.shadowOf(android.os.Looper.getMainLooper()).idleFor(Duration.ofMillis(350))
+            touch(space,MotionEvent.ACTION_MOVE,65f,30f)
+            assertEquals(1,Selection.getSelectionStart(service.buffer))
+            touch(space,MotionEvent.ACTION_UP,65f,30f)
         } finally {controller.destroy()}
     }
     @Test fun suggestionPreservesFollowingPunctuation() {
