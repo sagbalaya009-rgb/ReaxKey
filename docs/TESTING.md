@@ -37,6 +37,9 @@ Build `:testbed`, a tiny separate debug application with fields that advertise c
 - accepts `image/png,image/jpeg`,
 - accepts no rich content.
 
+The testbed also has a multiline plain-text field for horizontal, vertical and
+diagonal hold-space cursor checks without using a messaging app.
+
 This lets tests verify the sender without depending entirely on WhatsApp/Telegram behavior.
 
 ## 2. Physical phone test matrix
@@ -154,4 +157,18 @@ See docs/SOURCE_DISCOVERY.md for implementation and verification details.
 
 Robolectric `KeyboardTest` covers basic typing and media-panel return, boundary correction and immediate undo, suggestion prefix replacement and punctuation preservation, password/no-suggestions editors, tap versus hold, diagonal cursor movement/cancel, a missing `InputConnection`, logical-line fallback and surrogate-pair-safe horizontal fallback. The offline model test checks high-confidence typo cases, capitalization, unknown-word noncorrection, three-use learning and clearing pending learning. The app unit suite, debug APK, Android test APK and lint run locally; see `PROJECT_STATE.md` for the recorded result.
 
-The upgraded APK still needs hands-on checks on a connected Android phone. Use a multiline note to test horizontal/vertical/diagonal hold-space movement and wrapped lines; type in ordinary, search, password, email and URL fields; inspect portrait/landscape and dark/light appearance; check Media open/return and existing sticker imports. Re-test actual sticker sending in Telegram and Snapchat. Record exact app versions, Android version, and observed outcomes. WhatsApp and other apps must remain unverified until actually tested. Automated tests do not establish touch feel or third-party compatibility.
+On TECNO KL5 / Android 14, the upgraded debug APK was installed over the previous
+version with app data retained. In the testbed's plain-text fields, `teh` + Space
+became `the `, immediate Backspace restored `teh`, and tapping the `the` suggestion
+committed one replacement. A hold-space drag moved the insertion point left without
+inserting a space. In the multiline field, hold-space drags moved up, down and
+diagonally across a newline before a typed marker established the insertion point.
+The populated Media panel opened and returned to typing. The separate receiver read
+a real WebP sticker from the library through the new IME (`image/webp`, 4,822 bytes).
+The installed instrumentation suite passed 4/4 tests.
+
+Still check wrapped lines, search/password/email/URL fields, portrait/landscape and
+dark/light appearance, plus actual Telegram and Snapchat sticker sending on the
+upgraded build. Record app versions and observed outcomes. WhatsApp and other apps
+remain unverified until tested. Automated tests and the local receiver do not
+establish third-party compatibility or subjective touch feel.

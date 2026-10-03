@@ -20,6 +20,12 @@ class ReceiverActivity:Activity() {
         val status=TextView(this).apply {setText(R.string.waiting)}
         val fields=listOf(R.string.png_jpeg to arrayOf("image/png","image/jpeg"),R.string.gif to arrayOf("image/gif"),R.string.webp to arrayOf("image/webp"),R.string.all to arrayOf("image/png","image/jpeg","image/gif","image/webp"),R.string.none to emptyArray())
         fields.forEach { (label,mimes) -> layout.addView(ReceiverField(this,mimes){message->status.text=message}.apply {setHint(label);minHeight=96}) }
+        layout.addView(EditText(this).apply {
+            setHint(R.string.multiline_cursor)
+            inputType=android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE
+            minLines=4
+            gravity=android.view.Gravity.TOP
+        })
         layout.addView(status)
         setContentView(ScrollView(this).apply {addView(layout)})
     }
