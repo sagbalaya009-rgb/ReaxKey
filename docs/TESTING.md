@@ -167,8 +167,9 @@ The populated Media panel opened and returned to typing. The separate receiver r
 a real WebP sticker from the library through the new IME (`image/webp`, 4,822 bytes).
 The installed instrumentation suite passed 4/4 tests.
 
-Still check wrapped lines, search/password/email/URL fields, portrait/landscape and
-dark/light appearance, plus actual Telegram and Snapchat sticker sending on the
-upgraded build. Record app versions and observed outcomes. WhatsApp and other apps
-remain unverified until tested. Automated tests and the local receiver do not
-establish third-party compatibility or subjective touch feel.
+The owner tested stickers in Telegram and Snapchat on the upgraded build and
+reported both working; exact versions and media formats were not supplied.
+Still check wrapped lines, search/password/email/URL fields, landscape and
+dark/light appearance. WhatsApp and other apps remain unverified until tested.
+Automated tests and the local receiver do not establish other third-party
+compatibility or subjective touch feel.
