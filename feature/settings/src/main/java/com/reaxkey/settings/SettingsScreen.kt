@@ -30,7 +30,10 @@ import kotlinx.coroutines.launch
         Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween) { Text(stringResource(R.string.haptics)); Switch(value.haptics,{scope.launch { preferences.haptics(it) }}) }
         Text(stringResource(R.string.sticker_access),style=MaterialTheme.typography.titleMedium)
         Text(stringResource(R.string.sticker_access_detail),style=MaterialTheme.typography.bodyMedium)
-        sources.filter {it.enabled}.forEach {source->Text(stringResource(R.string.source_stickers_count,source.name,source.count))}
+        sources.filter {it.enabled}.forEach {source->
+            Text(if(source.health=="SCANNING") stringResource(R.string.source_sticker_indexing,source.name)
+                else stringResource(R.string.source_stickers_count,source.name,source.count))
+        }
         OutlinedButton(onClick=folder){Text(stringResource(R.string.select_sticker_folder))}
         TextButton(onClick=refresh){Text(stringResource(R.string.refresh_stickers))}
         Text(stringResource(R.string.privacy_settings),style=MaterialTheme.typography.titleMedium)

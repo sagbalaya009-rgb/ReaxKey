@@ -14,4 +14,6 @@
     <string name="privacy_settings">Privacy</string>
     <string name="privacy_sticker_detail">Typing stays on your phone. ReaxKey does not record or upload typed text. Sticker indexing stays on this device.</string>
     <string name="source_stickers_count">%1$s · %2$d stickers</string>
+    <string name="sticker_indexing">Indexing stickers…</string>
+    <string name="source_sticker_indexing">%1$s · Indexing stickers…</string>
 </resources>

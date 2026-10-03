@@ -34,6 +34,10 @@ fun StickerHomeScreen(repo:MediaRepository,candidates:List<SourceCandidate>,chec
             OutlinedButton(onClick=refresh,enabled=!checking){Text(stringResource(R.string.refresh_stickers))}
         }
         if(checking) LinearProgressIndicator(Modifier.fillMaxWidth())
+        if(sources.any {it.enabled && it.health=="SCANNING"}) {
+            Text(stringResource(R.string.sticker_indexing),style=MaterialTheme.typography.bodyMedium)
+            LinearProgressIndicator(Modifier.fillMaxWidth())
+        }
         if(needsPermission) TextButton(onClick=grant){Text(stringResource(R.string.find_whatsapp_stickers))}
         found.forEach {candidate->
             Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween) {

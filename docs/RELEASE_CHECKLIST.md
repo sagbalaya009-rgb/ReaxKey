@@ -1,5 +1,7 @@
 # Release procedure
 
+Current release gate status is in `PROJECT_STATE.md` and `docs/RELEASE_BLOCKERS.md`. A passing local build is not a signed or Play-approved release. The 1.0.0 bundle is currently unsigned and `v1.0.0-rc1` has not been created.
+
 ReaxKey is a paid-once Play application. Do not publish without the owner's explicit instruction.
 
 ## Reproducible verification

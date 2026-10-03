@@ -7,7 +7,7 @@ android {
         minSdk = 26
         targetSdk = 37
         versionCode = providers.gradleProperty("VERSION_CODE").orElse("1").get().toInt()
-        versionName = providers.gradleProperty("VERSION_NAME").orElse("0.1.0-dev").get()
+        versionName = providers.gradleProperty("VERSION_NAME").orElse("1.0.0").get()
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     buildFeatures { compose = true }

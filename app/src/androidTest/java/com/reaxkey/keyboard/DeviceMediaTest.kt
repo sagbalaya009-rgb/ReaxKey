@@ -19,7 +19,7 @@ class DeviceMediaTest {
         val access=MediaAccess(app,app.repository)
         val bitmap=Bitmap.createBitmap(96,96,Bitmap.Config.ARGB_8888)
         bitmap.eraseColor(android.graphics.Color.CYAN)
-        val formats=listOf("png" to Bitmap.CompressFormat.PNG,"jpg" to Bitmap.CompressFormat.JPEG,"webp" to Bitmap.CompressFormat.WEBP)
+        val formats=listOf("png" to Bitmap.CompressFormat.PNG,"webp" to Bitmap.CompressFormat.WEBP)
         val files=formats.map { (extension,format) ->
             File(app.filesDir,"imports/QA-sample.$extension").apply { parentFile!!.mkdirs();outputStream().use {bitmap.compress(format,90,it)} }
         }+File(app.filesDir,"imports/QA-sample.gif").apply {
@@ -31,10 +31,22 @@ class DeviceMediaTest {
                 val id=access.importCopy(FileProvider.getUriForFile(app,"${app.packageName}.media",file))
                 val item=app.repository.item(id)!!
                 assertTrue(item.width>0 && item.height>0)
-                assertEquals(when(file.extension){"jpg"->"image/jpeg";else->"image/${file.extension}"},item.mime)
+                assertEquals("image/${file.extension}",item.mime)
                 if(InstrumentationRegistry.getArguments().getString("retainFixtures")!="true") access.deleteOwned(item)
             }
         } finally {files.forEach {it.delete()} }
+    }
+    @Test fun ordinaryJpegPhotoIsRejected()=runBlocking {
+        val app=InstrumentationRegistry.getInstrumentation().targetContext.applicationContext as ReaxApplication
+        val file=File(app.filesDir,"imports/QA-photo.jpg")
+        file.parentFile!!.mkdirs()
+        val bitmap=Bitmap.createBitmap(96,96,Bitmap.Config.ARGB_8888)
+        try {
+            file.outputStream().use { assertTrue(bitmap.compress(Bitmap.CompressFormat.JPEG,90,it)) }
+            val uri=FileProvider.getUriForFile(app,"${app.packageName}.media",file)
+            try { MediaAccess(app,app.repository).importCopy(uri);fail("JPEG photo entered sticker library") }
+            catch(_:java.io.IOException) { }
+        } finally { bitmap.recycle();file.delete() }
     }
     @Test fun importDeduplicatesAndOutgoingCopyRemainsReadable() = runBlocking {
         val app=InstrumentationRegistry.getInstrumentation().targetContext.applicationContext as ReaxApplication

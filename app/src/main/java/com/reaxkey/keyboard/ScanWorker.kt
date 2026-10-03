@@ -17,7 +17,8 @@ class ScanWorker(context:Context,parameters:WorkerParameters):CoroutineWorker(co
     }
     companion object {
         fun enqueue(context:Context,id:String) {
-            WorkManager.getInstance(context).enqueueUniqueWork("scan-$id",ExistingWorkPolicy.KEEP,
+            // A user-requested refresh must recover a job that Android stopped and left queued.
+            WorkManager.getInstance(context).enqueueUniqueWork("scan-$id",ExistingWorkPolicy.REPLACE,
                 OneTimeWorkRequestBuilder<ScanWorker>().setInputData(workDataOf("source" to id)).build())
         }
     }
