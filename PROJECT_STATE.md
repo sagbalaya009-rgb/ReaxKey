@@ -23,3 +23,9 @@ CI separates the debug artifacts from the explicitly unsigned bundle. Play listi
 ## Open gates
 
 See `docs/RELEASE_BLOCKERS.md`. In particular: secure upload key and signed AAB; Google Play review of optional `READ_MEDIA_IMAGES`; wider IME regression, Play-track acquisition/update and broader API/accessibility checks. No `v1.0.0-rc1` tag or production-ready claim while these remain open.
+
+## iOS workstream — 2026-10-03
+
+`ios/` now contains a native SwiftUI companion app, a custom keyboard extension, a shared local sticker library and an XcodeGen project specification. The iOS library imports user-selected PNG/GIF/WebP stickers, deduplicates and stores them locally, and exposes search, favorites, collections, recents, labels and sharing. The keyboard provides basic typing without Full Access; with explicit Full Access it can copy a selected sticker so the user may paste where the destination allows. Apple does not expose Android's direct rich-content commit API to custom keyboards, so iOS Telegram/Snapchat parity is **unverified** and should not be claimed.
+
+The owner has neither a Mac nor an Apple Developer account yet. Source can be packaged now and an unsigned simulator build can be checked by GitHub's macOS runner. A physical-iPhone IPA is not available without Apple signing/provisioning and real-device validation. See `ios/README.md`; never present the source ZIP or simulator app as an installable iPhone file.

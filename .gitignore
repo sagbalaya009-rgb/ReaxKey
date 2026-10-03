@@ -16,3 +16,8 @@ secrets.properties
 .kotlin/
 .android/
 *.log
+ios/build/
+ios/*.xcodeproj/
+ios/*.xcworkspace/
+ios/*.xcuserstate
+ios/DerivedData/
