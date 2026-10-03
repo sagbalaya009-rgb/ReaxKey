@@ -1,5 +1,6 @@
 name: iOS
 on:
+  workflow_dispatch:
   push:
     branches: [main, 'build/**']
     paths:
@@ -39,11 +40,20 @@ jobs:
       - name: Package editable iOS project
         if: always()
         run: zip -r -q reaxkey-ios-project.zip ios -x 'ios/build/*'
+      - name: Package simulator app
+        run: |
+          ditto -c -k --sequesterRsrc --keepParent \
+            ios/build/Build/Products/Debug-iphonesimulator/ReaxKey.app \
+            reaxkey-ios-simulator-app.zip
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: reaxkey-ios-project-source
           path: reaxkey-ios-project.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: reaxkey-ios-simulator-app
+          path: reaxkey-ios-simulator-app.zip
       - uses: actions/upload-artifact@v4
         if: always()
         with:
