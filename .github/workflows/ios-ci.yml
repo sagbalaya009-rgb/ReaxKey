@@ -37,12 +37,15 @@ jobs:
           sleep 2
           xcrun simctl io "$DEVICE_ID" screenshot ios/simulator-smoke.png
       - name: Package editable iOS project
+        if: always()
         run: zip -r -q reaxkey-ios-project.zip ios -x 'ios/build/*'
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: reaxkey-ios-project-source
           path: reaxkey-ios-project.zip
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: reaxkey-ios-simulator-smoke
           path: ios/simulator-smoke.png
