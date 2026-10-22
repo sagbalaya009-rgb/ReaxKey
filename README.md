@@ -1,5 +1,7 @@
 # ReaxKey — Engineering Repository
 
+> **Status: PLANNING / PRE-IMPLEMENTATION** — Public documentation is being prepared, but no working Android keyboard, installable APK, or app release exists yet. Commercial distribution and source-code licensing are not finalized.
+
 > **Product identity is now locked for development:** **ReaxKey**. The app is planned as a **one-time paid Google Play app** with no ads, no subscription, and no required account. Core keyboard/media functionality remains local-first and offline-capable.
 
 ## What this project is
